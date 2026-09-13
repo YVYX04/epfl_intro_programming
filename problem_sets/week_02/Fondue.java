@@ -22,14 +22,10 @@ public class Fondue
                         " - " + eau * nbConvives / BASE + " dl d'eau\n" + //
                         " - " + ail * nbConvives / BASE + " gousse(s) d'ail\n" + //
                         " - " + pain * nbConvives / BASE + " gr de pain\n" + //
-                        " - du poivre à volonté");
-
-
-
-
-
-
-        
+                        " - du poivre à volonté");   
+                        
+        keyb.close();
+        return;
     }
     
 }
