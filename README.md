@@ -12,7 +12,7 @@ My code, notes and solutions for *Introduction to Programming*, the first-year C
 | --------------- | ---------------------------------------------------------- |
 | `mooc_i/`       | Code and notes for the first MOOC                          |
 | `mooc_ii/`      | Code and notes for the second MOOC                         |
-| `problem_sets/` | Weekly EPFL problem sets and my solutions *(coming soon)*  |
+| `problem_sets/` | Weekly EPFL problem sets and my solutions                  |
 
 ```txt
 .
