@@ -122,3 +122,20 @@ class IMC {
 ```
 
 Notre programme peut maintenant calculer l'IMC pour n'importe quels poids et taille. Il peut être amélioré en contrôlant que les valeurs saisies soient bien raisonnables. Mais pour cela, il faut utiliser ce que l'on appelle des structures de contrôle (vues dès la semaine prochaine).
+
+## Age
+
+Ecrivez un programme `Age.java` qui :
+
+1. demande son âge à l'utilisateur
+2. lit la réponse de l'utilisateur et l'enregistre dans une variable age de type entier ;
+3. calcule l'année de naissance (à un an près) de l'utilisateur et l'enregistre dans la variable annee de type entier ;
+4. affiche l'année de naissance ainsi calculée.
+
+Exemple d'exécution du programme:
+
+```text
+Donnez votre age : 
+21
+Votre annee de naissance est : 2005
+```
