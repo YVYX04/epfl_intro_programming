@@ -176,3 +176,58 @@ Pour faire une fondue fribourgeoise pour 3 personnes, il vous faut :
  - 300.0 gr de pain
  - du poivre à volonté
 ```
+
+## Expression Polynômiale
+
+Écrivez un petit programme Java, `Degre3.java`, vous permettant d'évaluer un polynôme du 3ème degré de la forme:
+
+$$
+\frac{a + b}{2}x^3 + (a + b)^2x^2 + a + b + c, \quad a, b, c \in \mathbb R
+$$
+
+**Exemple**
+
+```txt
+Entrez a (int) : 1
+Entrez b (int) : 2
+Entrez c (int) : 3
+Entrez x (double) : 3.5
+La valeur du polynôme est : 180.5625 
+```
+
+Notez qu'il n'y a pas d'opérateur simple pour la puissance 3 en Java. Il faut utiliser des multiplications. Vous introduirez également au besoin des variables auxiliaires pour rendre le calcul plus efficace. N'oubliez pas de faire en sorte que le nom de la classe soit identique au nom du fichier.
+
+## Swap
+
+Implémentez en Java un algorithme vous permettant de permuter les valeurs de deux variables.
+
+**Exemple**
+
+```txt
+Entrez x: 1
+Entrez y: 2
+Avant permutation:
+x : 1
+y : 2
+Après permutation:
+x : 2
+y : 1
+```
+
+## Tante Fortunée
+
+Une tante fortunée vous envoie un jour une petite enveloppe (en francs tout ronds) pour vos études à l'EPFL. L'étudiant.e prévoyant.e et organisé.e que vous êtes décide de gérer cette somme de la façon suivante :
+
+Les trois quarts de cette somme seront dédiés à l'achat de livres et fournitures
+Le reste sera équitablement réparti entre les rubriques "cafés à Sat", "abonnement au Flash" et "billets de métro".
+Vous décidez également de gérer cette somme en francs tout rond. Le reste de l'argent sera destiné à acheter un bouquet de fleur à votre maman pour la prochaine fête des mères. En supposant qu'un café à Sat vaut 2 Frs, qu'un numéro du Flash en vaut 4 et qu'un billet de métro vaut 3 Frs, écrivez le programme `RoseBlanches.java` vous permettant de produire la sortie suivante:
+
+```txt
+Combien avez-vous reçu d'argent (Frs)? 800
+Livre et Fournitures: 600 Frs
+Vous pouvez ensuite acheter:
+33 cafes a Sat
+16 numeros du Flash
+22 billets de métro
+et il vous restera 4 Frs pour les roses blanches.
+```
