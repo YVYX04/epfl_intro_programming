@@ -13,11 +13,13 @@ Java code and notes for *Introduction to Programming*, the first-year Computer S
 ├── mooc_i/                         First MOOC: code and notes, one folder per unit
 │   ├── 01_basics/                  Plain .java files
 │   ├── 02_conditional_statements/  notes.ipynb + lecture_notes/
-│   └── 03_loops/                   notes.ipynb
+│   ├── 03_loops/                   notes.ipynb
+│   └── 04_arrays/                  notes.ipynb (in progress)
 ├── mooc_ii/                        Second MOOC (not started)
 └── problem_sets/                   Weekly problem sets and my solutions
     ├── week_02/
-    └── week_03/
+    ├── week_03/
+    └── week_04/
 ```
 
 Each unit covers one topic. A week's work is done on its own branch (e.g. `w03`) and merged into `main` once it is finished.
@@ -31,6 +33,7 @@ Each unit covers one topic. A week's work is done on its own branch (e.g. `w03`)
 | `mooc_i/01_basics`                 | First program, printing, variables and types, constants, `Scanner` input, expressions and integer division      |
 | `mooc_i/02_conditional_statements` | `if` / `else`, nested branching, comparison operators, logical operators (`&&`, `\|\|`, `^`, `!`), storing boolean results |
 | `mooc_i/03_loops`                  | `for` loops, nested loops, variable scope and local variables, `do-while` and `while` loops                     |
+| `mooc_i/04_arrays`                 | *(in progress)* Declaring and initialising arrays, indexing, `length`, the for-each loop, arrays as references (aliasing) |
 
 ### Problem sets
 
@@ -60,6 +63,13 @@ Each unit covers one topic. A week's work is done on its own branch (e.g. `w03`)
 | `Arrangements.java`   | `n!/(n−k)!` and `n!/((n−k)!·k!)` (small *n* only)                                 |
 | `Rebonds1.java`       | Bouncing ball: height after a given number of bounces                             |
 | `Rebonds2.java`       | Bouncing ball: number of bounces before the height drops below a threshold        |
+
+**Week 04: strings and arrays** (statement in [`ps_04.pdf`](problem_sets/week_04/ps_04.pdf))
+
+| File                | Exercise                                                                       |
+| ------------------- | ------------------------------------------------------------------------------ |
+| `Crypto.java`       | Caesar cipher: keeps lowercase letters and spaces, then shifts each letter by 4 |
+| `MostFrequent.java` | Most frequent value in an integer array, with its number of occurrences        |
 
 ## Running the code
 
