@@ -1,0 +1,1 @@
+The notes for this week are to be completed (if useful).
