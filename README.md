@@ -2,7 +2,7 @@
 
 **Yvan Richard · EPFL · Fall 2026**
 
-Java code and notes for *Introduction to Programming*, the first-year Computer Science course at EPFL. The course follows two MOOCs and comes with weekly problem sets.
+Java code, notes and problem set solutions for *Introduction to Programming*, the first-year Computer Science course at EPFL. The course follows two MOOCs (procedural Java, then object-oriented Java) and comes with weekly problem sets.
 
 > The course is taught in French, so parts of the code and notes are in French.
 
@@ -10,82 +10,60 @@ Java code and notes for *Introduction to Programming*, the first-year Computer S
 
 ```
 .
-├── mooc_i/                         First MOOC: code and notes, one folder per unit
-│   ├── 01_basics/                  Plain .java files
-│   ├── 02_conditional_statements/  notes.ipynb + lecture_notes/
-│   ├── 03_loops/                   notes.ipynb
-│   └── 04_arrays/                  notes.ipynb (in progress)
-├── mooc_ii/                        Second MOOC (not started)
-└── problem_sets/                   Weekly problem sets and my solutions
-    ├── week_02/
-    ├── week_03/
-    └── week_04/
+├── mooc_i/          MOOC I: procedural programming, one folder per unit
+├── mooc_ii/         MOOC II: object-oriented programming, one folder per unit
+└── problem_sets/    Weekly problem sets (statements + solutions), one folder per week
 ```
 
-Each unit covers one topic. A week's work is done on its own branch (e.g. `w03`) and merged into `main` once it is finished.
+Each week is worked on its own branch (e.g. `week7`) and merged into `main` when finished.
 
 ## Progress
 
 ### MOOC I
 
-| Unit                               | Topics                                                                                                          |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `mooc_i/01_basics`                 | First program, printing, variables and types, constants, `Scanner` input, expressions and integer division      |
-| `mooc_i/02_conditional_statements` | `if` / `else`, nested branching, comparison operators, logical operators (`&&`, `\|\|`, `^`, `!`), storing boolean results |
-| `mooc_i/03_loops`                  | `for` loops, nested loops, variable scope and local variables, `do-while` and `while` loops                     |
-| `mooc_i/04_arrays`                 | *(in progress)* Declaring and initialising arrays, indexing, `length`, the for-each loop, arrays as references (aliasing) |
+| Unit                         | Topics                                                         | Content                        |
+| ---------------------------- | -------------------------------------------------------------- | ------------------------------ |
+| `01_basics`                  | Printing, variables and types, constants, `Scanner`, expressions | `.java` files                |
+| `02_conditional_statements`  | `if` / `else`, comparison and logical operators                | `notes.ipynb`, `lecture_notes/` |
+| `03_loops`                   | `for`, `while`, `do…while`, nested loops, scope                | `notes.ipynb`                  |
+| `04_arrays`                  | Declaring, indexing, for-each, arrays as references            | `notes.ipynb`                  |
+| `05_strings_dynamic_arrays`  | `String`, `ArrayList`                                          | `notes.md` (placeholder)       |
+| `06_functions`               | Defining methods, passing arguments                            | `notes.ipynb`                  |
+
+### MOOC II
+
+| Unit                   | Topics                                                                                           | Content                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `01_introduction_oop`  | Classes and objects, encapsulation, `this`, constructors (default, copy, chaining), `toString()` | `notes.ipynb`, Tic-Tac-Toe (`Main`, `TicTacToe`) |
 
 ### Problem sets
 
-**Week 02: variables, types and expressions** (statement in [`set_week_02.md`](problem_sets/week_02/set_week_02.md))
+| Week | Theme                              | Solutions                                                                 |
+| ---- | ---------------------------------- | ------------------------------------------------------------------------- |
+| 02   | Variables, types and expressions   | 7 exercises (`IMC`, `Fondue`, `RosesBlanches`, …), statement in `set_week_02.md` |
+| 03   | Conditionals and loops             | 10 exercises (`Degree2`, `GCD`, `Rebonds1/2`, …)                          |
+| 04   | Strings and arrays                 | `Crypto` (Caesar cipher), `MostFrequent`, statement in `ps_04.pdf`        |
+| 05   | *Five Java Missions* (custom set)  | Mission 1 `Touchdown` (lunar lander simulation, optimal-policy search still to do) |
 
-| File                 | Exercise                                             |
-| -------------------- | ---------------------------------------------------- |
-| `IMC.java`           | Body mass index from weight and height               |
-| `MySwap.java`        | Swapping two variables                               |
-| `Types.java`         | Type conversions and casts, with the value of each line annotated (deliberately does not compile) |
-| `Degre3.java`        | Evaluating a polynomial expression in *a*, *b*, *c*, *x* |
-| `Age.java`           | Birth year from an age                               |
-| `Fondue.java`        | Scaling a fondue recipe to the number of guests      |
-| `RosesBlanches.java` | *Tante Fortunée*: splitting a budget with integer division and modulo |
+## Running
 
-**Week 03: conditionals and loops**
-
-| File                  | Exercise                                                                          |
-| --------------------- | --------------------------------------------------------------------------------- |
-| `Even.java`           | Is an integer positive or negative, odd or even                                   |
-| `Interval.java`       | Which interval a real number belongs to                                           |
-| `Degree2.java`        | Solving `a·x² + b·x + c = 0`, with the user interface kept apart from the solver |
-| `Multiplication.java` | Multiplication tables from 2 to 10                                                |
-| `SameLoop.java`       | The same loop written with `for`, `do…while` and `while`                          |
-| `MeanMaxMin.java`     | Mean, maximum and minimum of *n* integers                                         |
-| `GCD.java`            | Greatest common divisor of two positive integers                                  |
-| `Arrangements.java`   | `n!/(n−k)!` and `n!/((n−k)!·k!)` (small *n* only)                                 |
-| `Rebonds1.java`       | Bouncing ball: height after a given number of bounces                             |
-| `Rebonds2.java`       | Bouncing ball: number of bounces before the height drops below a threshold        |
-
-**Week 04: strings and arrays** (statement in [`ps_04.pdf`](problem_sets/week_04/ps_04.pdf))
-
-| File                | Exercise                                                                       |
-| ------------------- | ------------------------------------------------------------------------------ |
-| `Crypto.java`       | Caesar cipher: keeps lowercase letters and spaces, then shifts each letter by 4 |
-| `MostFrequent.java` | Most frequent value in an integer array, with its number of occurrences        |
-
-## Running the code
-
-Each `.java` file is a standalone program with its own `main` method. A JDK is required (developed with OpenJDK 25). Java 11+ can run a single source file directly:
+Every `.java` file with a `main` method runs directly (JDK 11+, developed with OpenJDK 25):
 
 ```sh
-java mooc_i/01_basics/HelloWorld.java
 java problem_sets/week_03/GCD.java
+java problem_sets/week_05/01_touchdown/Touchdown.java
 ```
 
-`Rebonds1` and `Rebonds2` use an instance `main` method, which needs Java 25 (or an earlier JDK with `--enable-preview`).
-
-The notebooks need Jupyter together with a Java kernel ([JJava](https://github.com/dflib/jjava)):
+Multi-file programs are compiled together:
 
 ```sh
-jupyter lab mooc_i/03_loops/notes.ipynb
+javac -d out mooc_ii/01_introduction_oop/*.java && java -cp out Main
 ```
 
-Compiled `.class` files are ignored by Git.
+`Rebonds1` and `Rebonds2` use an instance `main` method, which needs Java 25.
+
+Notebooks need Jupyter with a Java kernel ([JJava](https://github.com/dflib/jjava)):
+
+```sh
+jupyter lab mooc_i/06_functions/notes.ipynb
+```
