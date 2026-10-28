@@ -138,6 +138,20 @@ public class Main
         assert testHarmonicSum()               : "testHarmonicSum() failed.";
 
         System.out.println("All tests passed.");
+
+        // ___ EXERCISE 1.2 ___
+        // ___ 12. FractionLab ___
+        for(int i = 1; i <= 10; ++i) {
+            FractionLab h = new FractionLab(i);
+            System.out.println(i + ": " + h);
+        }
+
+        // ___ 13. test FractionLab with bigger n ___
+        FractionLab h20 =  new FractionLab(20);
+        System.out.println(h20);
+
+        // ___ EXERCISES 1.3 ___
+
     }
 
     // ___ HELPERS ___

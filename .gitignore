@@ -10,3 +10,7 @@ notes.sty
 *.fls
 *.log
 *.out
+
+# intellij idea files
+*.iml
+.idea/
