@@ -2,3 +2,15 @@
 .venv/
 notes.sty
 *.class
+
+# latex files
+*.aux
+*.dvi
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+
+# intellij idea files
+*.iml
+.idea/
