@@ -20,34 +20,41 @@ public class Turtle
 
     // ___ CONSTRUCTORS ___
     /**
-     * Main constructor of the Turtle class
+     * Private constructor that sets the full state without any check.
+     * Used by the public constructors, so a copy works even when the turtle is off the canvas.
+     */
+    private Turtle(Canvas canvas, int x, int y, int heading, boolean penDown, char penChar)
+    {
+        this.canvas = canvas;
+        this.x = x;
+        this.y = y;
+        this.heading = heading;
+        this.penDown = penDown;
+        this.penChar = penChar;
+    }
+
+    /**
+     * Main constructor of the Turtle class: heading N, pen down, pen char '*'.
      * @param canvas : the canvas the turtle will draw on.
      * @param x : the column position of the turtle.
      * @param y : the row position of the turtle.
      */
     public Turtle(Canvas canvas, int x, int y)
     {
+        // this(...) must come first, so the checks run right after it
+        this(canvas, x, y, 0, true, '*');
+
         // forbid null canvas
         if(canvas == null)
         {
             throw new IllegalArgumentException("Canvas object must not be null.");
         }
 
-        this.canvas = canvas;
-
         // check x and y coordinates are inside the canvas
         if(!(canvas.isInside(x, y)))
         {
             throw new IllegalArgumentException("The turtle must be positioned inside the canvas, got x = " + x + ", y = " + y);
         }
-
-        this.x = x;
-        this.y = y;
-
-        // init other variables
-        heading = 0;
-        penDown = true;
-        penChar = '*';
     }
 
     /**
@@ -65,7 +72,8 @@ public class Turtle
      */
     public Turtle(Turtle o)
     {
-        this(o.canvas, o.x, o.y);
+        // same canvas (shared reference) and same state, no position check
+        this(o.canvas, o.x, o.y, o.heading, o.penDown, o.penChar);
     }
 
     // ___ GETTERS ___
@@ -80,7 +88,7 @@ public class Turtle
     public void setPen(char c) {penChar = c; }
 
     /**
-     * 
+     * Update the turtle direction by rotating it clockwise with an angle deg.
      * @param deg : may be any multiple of 45, including negative values and values ≥360.
      * @return true if successful operation
      */
@@ -88,11 +96,24 @@ public class Turtle
     {
         int remainder = deg % 45;
         if(remainder != 0) {
-            throw new IllegalArgumentException("the angle deg must be a multiple of 45, got : " + deg);
+            throw new IllegalArgumentException("the angle deg must be a multiple of 45, got: " + deg);
         }
 
         // update heading index
-        heading = (heading + (deg / 45)) % 8;
+        int newIndex = (heading + (deg / 45)) % 8;
+        if(newIndex < 0) newIndex += 8;
+        heading = newIndex;
+        return true;
+    }
+
+    /**
+     * Update the turtle direction by rotating it counter-clockwise with an angle deg.
+     * @param deg : angle of rotation
+     * @return true if successful operation
+     */
+    public boolean turnLeft(int deg)
+    {
+        turnRight(-deg);
         return true;
     }
 
@@ -110,20 +131,20 @@ public class Turtle
             throw new IllegalArgumentException("n must be >= 0, got n = " + n);
         }
 
-        // draw on the canvas if the pen is down
-        while(canvas.plot(x, y, penChar) && n >= 0)
+        // draw in the current cell (only edit the grid if (x, y) is inside the canvas)
+        if(penDown) { canvas.plot(x, y, penChar); }
+
+        // draw on the canvas if the pen is down, else only update the position
+        while(n > 0)
         {
             // move in the direction of the heading
             x += headings[heading][0];
             y += headings[heading][1];
-            --n;
-        }
 
-        // if we still need to move but we cannot draw anymore, we simply update the position
-        if(n >= 0)
-        {
-            x += headings[heading][0];
-            y += headings[heading][1];
+            // plot (only edit grid if (x,y) is inside the canvas)
+            if(penDown) { canvas.plot(x, y, penChar); }
+
+            // update n
             --n;
         }
 
@@ -131,7 +152,26 @@ public class Turtle
 
     }
 
+    // ___ HELPERS ___
+    public String toString()
+    {
+        String out = new String();
+        out += "Turtle at ";
 
+        // coordinates
+        out += "(" + x + ", " + y + ") ";
+
+        // direction
+        out += " heading " + directions[heading] + " ";
+
+        // pen state 
+        out += (penDown) ? "pen down " : "pen up ";
+
+        // char
+        out += "'" + penChar + "'";
+
+        return out;
+    }
 
 
 }

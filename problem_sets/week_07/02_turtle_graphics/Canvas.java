@@ -44,7 +44,17 @@ public class Canvas
      */
     public Canvas(Canvas o)
     {
+        // init a new canvas with same width and height
         this(o.width, o.height);
+
+        // copy each cell (deep copy)
+        for(int i = 0; i < height; ++i)
+        {
+            for(int j = 0; j < width; ++j)
+            {
+                this.grid[i][j] = o.grid[i][j];
+            }
+        }
     }
 
     /**
@@ -99,7 +109,7 @@ public class Canvas
         {
             for(int j = 0; j < width; ++j)
             {
-                if(this.charAt(i, j) != o.charAt(i, j)) return false;
+                if(this.grid[i][j] != o.grid[i][j]) return false;
             }
         }
 
@@ -127,9 +137,9 @@ public class Canvas
      * @param x : column x
      * @param y : row y
      */
-    private boolean isInside(int x, int y)
+    public boolean isInside(int x, int y)
     {
-        return ((x >= 1 && x < width) && (y >= 1 && y < height));
+        return ((x >= 0 && x < width) && (y >= 0 && y < height));
     }
 
     /**
@@ -171,13 +181,15 @@ public class Canvas
      */
     public String toString()
     {
-        String out = new String();
+        String out = "";
         for(int i = 0; i < height; ++i)
         {
             for(int j = 0; j < width; ++j)
             {
-                out += (grid[i][j] + '\n');
+                out =  out + grid[i][j];
             }
+
+            if(i < height - 1) { out = out + '\n'; }
         }
         return out;
     }
