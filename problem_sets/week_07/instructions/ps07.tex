@@ -1,0 +1,973 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+
+\setlist[itemize]{label=$\bullet$}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\lstset{
+  language=Java,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape,
+  columns=fixed,
+  basewidth=0.525em,
+  keepspaces=true,
+  upquote=false,
+  literate={'}{{\char13}}1,
+  showstringspaces=false,
+  frame=single,
+  framerule=0.4pt,
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  aboveskip=0.6em,
+  belowskip=0.6em,
+  breaklines=true
+}
+\lstdefinestyle{out}{
+  language={},
+  keywordstyle={},
+  commentstyle={},
+  frame=leftline,
+  framerule=0.8pt,
+  xleftmargin=0.6em,
+  xrightmargin=0pt
+}
+\newcolumntype{S}[1]{>{\ttfamily\small\raggedright\arraybackslash}p{#1}}
+\newcolumntype{D}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\code}[1]{\lstinline[basicstyle=\ttfamily\normalsize,basewidth=0.5em]{#1}}
+
+% Questions: Q<exercise>.<n>
+\newlist{questions}{enumerate}{1}
+\setlist[questions]{label=\textbf{Q\theexnum.\arabic*}, leftmargin=3.2em, itemsep=0.5em}
+\newcounter{exnum}
+
+\newcommand{\exercise}[3]{%
+  \clearpage
+  \stepcounter{exnum}%
+  \section*{Exercise \theexnum\quad #1}
+  \addcontentsline{toc}{section}{Exercise \theexnum: #1}
+  \textit{Difficulty: #2.\quad Indicative time: #3.}\par\medskip}
+
+\newcommand{\nl}{\texttt{\char13\char92 n\char13}}
+\newcommand{\spec}[1]{\par\smallskip\textbf{#1}\par}
+
+\title{Introduction to Object-Oriented Programming (Java)\\[0.3em]
+\large Practice set for weeks 1--2 (Lessons 1--9)}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3em}
+
+\section*{How to use this sheet}
+
+There are three exercises of increasing difficulty. Each one consists of
+\begin{enumerate}[label=(\alph*), itemsep=0pt]
+  \item a \emph{specification} to implement;
+  \item one or more \emph{test programs} with their expected output. Where the
+        output is given, it must match yours character for character;
+  \item \emph{written questions} (Q). Answer each in a few sentences, and
+        justify every claim. ``It works when I run it'' is not a justification.
+        Answer the questions marked \emph{before coding} before writing any code.
+\end{enumerate}
+
+\paragraph{Allowed toolbox.} Everything from \emph{Initiation à la
+programmation en Java} (BOOC~I) and Lessons 1--9 of the OOP course. The
+following come later in the course and are \textbf{not} allowed: inheritance
+(\code{extends}), interfaces, exceptions (\code{throw}, \code{try}), and
+\code{static} attributes other than constants (\code{private static final}).
+Static methods are only allowed in the class that contains \code{main}, as
+in BOOC~I. Every attribute is \code{private}.
+
+\paragraph{Conventions.}
+\begin{itemize}[itemsep=0pt]
+  \item \code{equals} has the signature seen in Lesson~9:
+        \code{public boolean equals(C other)}, where \code{C} is the class itself. It returns
+        \code{false} when \code{other} is \code{null}.
+  \item Because \code{equals(Object)} has not been covered yet, the \code{ArrayList}
+        methods \code{contains}, \code{indexOf} and \code{remove(Object)} will
+        \emph{not} call your \code{equals}. Write the loops yourself.
+  \item Exceptions are not available yet, so invalid operations report failure
+        through their return value (\code{false}, \code{null} or \code{-1}),
+        exactly as specified.
+\end{itemize}
+
+\paragraph{What is tested.} {\small $\bullet$ = central, $\circ$ = used.}
+
+\begin{center}
+\begin{tabular}{l c c c c}
+\toprule
+Concept & Lesson & Ex.\,1 & Ex.\,2 & Ex.\,3 \\
+\midrule
+Classes, attributes, methods, \code{this}, masking   & 2--3 & $\circ$ & $\circ$ & $\circ$ \\
+\code{public}/\code{private}, getters and setters    & 3    & $\bullet$ & $\circ$ & $\circ$ \\
+Encapsulation: class invariants, interface design    & 4--5 & $\bullet$ & $\bullet$ & $\bullet$ \\
+Constructors, overloading, chaining with \code{this(...)} & 6--7 & $\bullet$ & $\bullet$ & $\circ$ \\
+Default constructor rules                            & 7    & $\bullet$ & $\circ$ & \\
+Copy constructor; shallow vs.\ deep copy             & 8    & $\circ$ & $\bullet$ & $\bullet$ \\
+References, aliasing, \code{null}, \code{==}         & 3, 9 & $\circ$ & $\bullet$ & $\bullet$ \\
+\code{toString}, \code{equals}                       & 9    & $\bullet$ & $\bullet$ & $\bullet$ \\
+End of life, garbage collection                      & 9    &         & $\circ$ & $\circ$ \\
+Arrays, \code{ArrayList}, \code{String} (BOOC I)     & --   & $\circ$ & $\bullet$ & $\bullet$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%======================================================================
+\exercise{Exact fractions and the hunt for $\pi$}{easy}{2 hours}
+
+In Java, \code{0.1 + 0.2 == 0.3} is \code{false}, because a \code{double}
+cannot store most decimal fractions exactly. In this exercise you build an
+exact \code{Fraction} type, then use it to compute harmonic numbers exactly
+and to find good rational approximations of $\pi$.
+
+\subsection*{1.1\quad The class \texttt{Fraction}}
+
+A \code{Fraction} stores its numerator and denominator in two
+\code{private final long} attributes. Every \code{Fraction} object must
+satisfy the following \emph{class invariant} from the moment its constructor
+returns:
+\begin{enumerate}[label=(I\arabic*), itemsep=0pt]
+  \item the denominator is strictly positive;
+  \item numerator and denominator have no common divisor other than $1$
+        (so zero is stored as $0/1$).
+\end{enumerate}
+\code{Fraction} objects are \emph{immutable}: no method ever changes the
+attributes after construction, and there are no setters.
+
+\spec{Constructors}
+\begin{itemize}[itemsep=2pt]
+  \item \code{Fraction(long n, long d)} builds $n/d$ in normalised form. If
+        \code{d == 0}, it prints exactly
+        \code{Error: zero denominator, fraction set to 0} on its own line and builds $0/1$.
+  \item \code{Fraction(long n)} builds the integer $n$. \emph{Must delegate} with \code{this(...)}.
+  \item \code{Fraction()} builds $0$. \emph{Must delegate} with \code{this(...)}.
+  \item \code{Fraction(Fraction other)} is the copy constructor.
+\end{itemize}
+
+\spec{Methods}
+
+\begin{tabular}{@{}S{0.40\textwidth} D{0.55\textwidth}@{}}
+long getNumerator(), long getDenominator() & accessors. \\
+Fraction add(Fraction o) & $\mathit{this} + o$ as a \emph{new} object. Never modifies \code{this} or \code{o}. \\
+Fraction subtract(Fraction o) & $\mathit{this} - o$. \\
+Fraction multiply(Fraction o) & $\mathit{this} \times o$. \\
+Fraction divide(Fraction o) & $\mathit{this} / o$; returns \code{null} if $o$ is zero. \\
+Fraction reciprocal() & $1/\mathit{this}$; returns \code{null} if \code{this} is zero. \\
+boolean isLessThan(Fraction o) & exact comparison $\mathit{this} < o$. No \code{double} allowed. \\
+double toDouble() & approximate value. \\
+String toString() & \code{"n/d"}, or just \code{"n"} when the denominator is $1$. \\
+boolean equals(Fraction o) & same rational number. \\
+\end{tabular}
+
+Write the greatest-common-divisor computation as a \code{private} helper
+method (Euclid's algorithm). You may assume that no test overflows \code{long}.
+
+\spec{Test 1}
+\begin{lstlisting}
+class FractionTest {
+    public static void main(String[] args) {
+        Fraction a = new Fraction(6, -8);
+        Fraction b = new Fraction(1, 4);
+        System.out.println(a + " " + b + " " + new Fraction(10, 5)
+                           + " " + new Fraction(0, -7) + " " + new Fraction());
+        System.out.println(a.add(b) + " " + a.subtract(b) + " "
+                           + a.multiply(b) + " " + a.divide(b));
+        System.out.println(a.divide(new Fraction()));
+        System.out.println(new Fraction(2, 4).equals(new Fraction(-3, -6)));
+        System.out.println(a.equals(null) + " " + a.isLessThan(b) + " " + b.isLessThan(a));
+        Fraction c = new Fraction(a);
+        System.out.println((c == a) + " " + c.equals(a));
+        System.out.println(new Fraction(3, 0));
+    }
+}
+\end{lstlisting}
+Expected output:
+\begin{lstlisting}[style=out]
+-3/4 1/4 2 0 0
+-1/2 -1 -3/16 -3
+null
+true
+false true false
+false true
+Error: zero denominator, fraction set to 0
+0
+\end{lstlisting}
+
+\subsection*{1.2\quad Harmonic numbers}
+
+In a class \code{FractionLab} (containing \code{main}), compute and print the
+harmonic numbers $H_n = 1 + \frac12 + \dots + \frac1n$ exactly for
+$n = 1,\dots,10$, followed by $H_{20}$:
+\begin{lstlisting}[style=out]
+H_1 = 1
+H_2 = 3/2
+H_3 = 11/6
+H_4 = 25/12
+H_5 = 137/60
+H_6 = 49/20
+H_7 = 363/140
+H_8 = 761/280
+H_9 = 7129/2520
+H_10 = 7381/2520
+H_20 = 55835135/15519504
+\end{lstlisting}
+
+\subsection*{1.3\quad Continued fractions}
+
+A (simple) continued fraction is written $[a_0; a_1, \dots, a_k]$ and means
+\[
+  [a_0; a_1, \dots, a_k] \;=\; a_0 + \cfrac{1}{a_1 + \cfrac{1}{\ddots + \cfrac{1}{a_k}}}
+  \qquad (a_0 \in \mathbb{Z},\; a_i \geq 1 \text{ for } i \geq 1).
+\]
+For example $[4; 2, 6, 7] = 415/93$.
+
+\begin{enumerate}[label=(\alph*)]
+  \item In \code{FractionLab}, write the static function
+        \code{static Fraction fromContinuedFraction(long[] a)}, which evaluates
+        $[a_0; a_1, \dots, a_k]$ exactly. You may assume that \code{a.length >= 1}
+        and that \code{a[i] >= 1} for \code{i >= 1}.
+  \item In \code{Fraction}, write the method
+        \code{ArrayList<Long> toContinuedFraction()}, which returns the
+        \emph{canonical} expansion of \code{this}. Let $a_0 = \lfloor x \rfloor$. If
+        $x$ is an integer, the expansion is $[a_0]$. Otherwise it is $a_0$
+        followed by the expansion of $1/(x - a_0)$. Careful: Java's integer
+        division truncates toward zero, which is not $\lfloor\cdot\rfloor$ for negative
+        numbers. You may use \code{Math.floorDiv(long, long)}.
+\end{enumerate}
+
+\spec{Test 2}
+\begin{lstlisting}
+System.out.println(FractionLab.fromContinuedFraction(new long[]{4, 2, 6, 7}));
+System.out.println(FractionLab.fromContinuedFraction(new long[]{3, 7, 15, 1}));
+System.out.println(FractionLab.fromContinuedFraction(new long[]{-3, 1, 2}));
+System.out.println(FractionLab.fromContinuedFraction(new long[]{5}));
+System.out.println(new Fraction(415, 93).toContinuedFraction());
+System.out.println(new Fraction(355, 113).toContinuedFraction());
+System.out.println(new Fraction(-7, 3).toContinuedFraction());
+System.out.println(new Fraction(5).toContinuedFraction());
+System.out.println(new Fraction(1, 3).toContinuedFraction());
+System.out.println(new Fraction(0).toContinuedFraction());
+\end{lstlisting}
+\begin{minipage}[t]{0.45\textwidth}
+Expected output:
+\begin{lstlisting}[style=out]
+415/93
+355/113
+-7/3
+5
+[4, 2, 6, 7]
+[3, 7, 16]
+[-3, 1, 2]
+[5]
+[0, 3]
+[0]
+\end{lstlisting}
+\end{minipage}
+
+\begin{enumerate}[label=(\alph*), resume]
+  \item \textbf{Convergents of $\pi$.} We have
+        $\pi = [3; 7, 15, 1, 292, 1, 1, \dots]$. The $k$-th \emph{convergent}
+        is the fraction given by the first $k$ terms. Print the first seven
+        convergents, each with its decimal value and its absolute error
+        $|c - \pi|$ (use \code{Math.PI}). The layout is up to you, but the fractions
+        must be the following:
+\begin{lstlisting}[style=out]
+3              3.0000000000  error 1.42e-01
+22/7           3.1428571429  error 1.26e-03
+333/106        3.1415094340  error 8.32e-05
+355/113        3.1415929204  error 2.67e-07
+103993/33102   3.1415926530  error 5.78e-10
+104348/33215   3.1415926539  error 3.32e-10
+208341/66317   3.1415926535  error 1.22e-10
+\end{lstlisting}
+  \item \textbf{Record hunt.} For every denominator $d = 1, \dots, 1000$, let
+        \code{n = Math.round(Math.PI * d)} and consider $n/d$. Print each
+        fraction whose error is \emph{strictly} smaller than the error of every
+        fraction seen before. You should find exactly these 14 records:
+\begin{lstlisting}[style=out]
+3  13/4  16/5  19/6  22/7  179/57  201/64  223/71  245/78  267/85
+289/92  311/99  333/106  355/113
+\end{lstlisting}
+\end{enumerate}
+
+\subsection*{1.4\quad Questions}
+\begin{questions}
+  \item \emph{(Lessons 6--7.)} List, in execution order, every constructor
+        body that runs during \code{new Fraction()}. Next, suppose you deleted every
+        constructor except \code{Fraction(long, long)}. Which expressions in Test~1
+        would no longer compile? Why does Java not supply a default constructor
+        in that case?
+  \item \emph{(Invariant.)} Your \code{equals} compares attributes one by one.
+        Explain why this is correct \emph{only because of} (I1) and (I2). Give
+        two attribute pairs representing $\tfrac12$ that a non-normalising
+        constructor could produce, and that \code{equals} would wrongly call
+        different. Then give a pair violating (I1) for which your
+        \code{isLessThan} gives a wrong answer, and show the computation.
+  \item \emph{(Encapsulation and aliasing.)} A classmate removes \code{final} and adds
+        \begin{center}\texttt{public void setNumerator(long n) \char123\ num = n; \char125}\end{center}
+        (a)~Write a client snippet of two or three lines after which
+        \code{equals} returns a wrong result.
+        (b)~With this setter, what does \code{Fraction b = a; a.setNumerator(5);}
+        do to \code{b}? Draw the memory diagram.
+        (c)~Why is \code{Fraction b = a;} harmless in \emph{your} class? Given
+        that, is your copy constructor useful at all?
+  \item \emph{(\code{null}.)} What happens when
+        \code{a.divide(new Fraction()).add(b)} runs, and on which exact
+        sub-expression? Compare the strategy of \code{divide} (return \code{null})
+        with that of the constructor (print a message and build $0/1$). Which
+        failure is easier to notice and debug, and why? Neither is fully
+        satisfactory. Which later chapter of the course addresses this?
+  \item \emph{(\code{==} vs.\ \code{equals}.)} Predict and justify the values of
+        \code{new Fraction(1, 2) == new Fraction(2, 4)},
+        \code{new Fraction(1, 2).equals(new Fraction(2, 4))},
+        and \code{(c == a)} in Test~1.
+  \item \emph{(Continued fractions.)} \code{fromContinuedFraction} returns
+        $355/113$ for both $\{3, 7, 15, 1\}$ and $\{3, 7, 16\}$. Explain why.
+        Does this mean \code{toContinuedFraction} is wrong? Also, what would your method
+        return for $-7/3$ if it used \code{/} instead of the floor? Derive it by hand.
+  \item \emph{(Optional, mathematical.)} Only four of the 14 records are
+        convergents. Look at the records from $22/7$ to $333/106$ and compute
+        the successive differences of their numerators and denominators.
+        Explain the pattern using the \emph{mediant}
+        $\frac{a}{b} \oplus \frac{c}{d} = \frac{a+c}{b+d}$, and relate the number of
+        intermediate records to the term $15$ in the expansion of $\pi$.
+\end{questions}
+
+%======================================================================
+\exercise{Turtle graphics on an ASCII canvas}{medium}{3--4 hours}
+
+A \emph{turtle} is a small robot holding a pen. It walks over a sheet of paper
+and leaves a trace wherever it goes while the pen is down. You will build the
+sheet (\code{Canvas}), the robot (\code{Turtle}), and an interpreter for a
+small drawing language, which you will then use to draw spirals and fireworks
+in the terminal.
+
+\paragraph{Coordinates.} Cell $(x, y)$ is in column $x$ (from $0$ on the left)
+and row $y$ (from $0$ at the \emph{top}). ``North'' means \emph{up}, that is,
+decreasing $y$. Headings are multiples of $45^\circ$, measured clockwise from
+North:
+
+\begin{center}
+\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l *{8}{c}}
+\toprule
+heading & 0 & 45 & 90 & 135 & 180 & 225 & 270 & 315 \\
+direction & N & NE & E & SE & S & SW & W & NW \\
+$(\Delta x, \Delta y)$ & $(0,-1)$ & $(1,-1)$ & $(1,0)$ & $(1,1)$ & $(0,1)$ & $(-1,1)$ & $(-1,0)$ & $(-1,-1)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{2.1\quad The class \texttt{Canvas}}
+
+A canvas is a rectangular grid of characters. Empty cells contain the constant
+\code{BLANK = '.'} (a \code{private static final char}). The grid is stored in
+a private two-dimensional \code{char} array that is \emph{never} exposed
+outside the class.
+
+\begin{tabular}{@{}S{0.40\textwidth} D{0.55\textwidth}@{}}
+Canvas(int width, int height) & all cells blank. Any dimension smaller than $1$ is replaced by $1$. \\
+Canvas() & a $21 \times 11$ canvas. Must delegate with \code{this(...)}. \\
+Canvas(Canvas other) & an independent copy. \\
+int getWidth(), int getHeight() & dimensions. \\
+boolean isInside(int x, int y) & whether $(x,y)$ is a cell of the canvas. \\
+boolean plot(int x, int y, char c) & writes \code{c} at $(x,y)$. Returns \code{false} and does nothing if $(x,y)$ is outside. \\
+char charAt(int x, int y) & content of $(x,y)$, or \code{BLANK} if outside. \\
+void clear() & blanks every cell. \\
+int inkCount() & number of non-blank cells. \\
+String toString() & the rows from top to bottom, separated by \nl, with no trailing newline. \\
+boolean equals(Canvas o) & same dimensions and same characters. \\
+\end{tabular}
+
+\subsection*{2.2\quad The class \texttt{Turtle}}
+
+A turtle knows the canvas it draws on (a reference), its position, its
+heading, whether its pen is down, and the character its pen writes.
+
+\begin{tabular}{@{}S{0.40\textwidth} D{0.55\textwidth}@{}}
+Turtle(Canvas canvas, int x, int y) & heading $0$, pen down, pen character \code{'*'}. Draws nothing. \\
+Turtle(Canvas canvas) & starts at the centre \code{(width/2, height/2)} (integer division). Must delegate with \code{this(...)}. Must not crash when \code{canvas} is \code{null}; it then starts at $(0,0)$. \\
+Turtle(Turtle other) & same state, and \emph{the same canvas} (shared, not copied). \\
+getX(), getY(), getHeading() & position, and heading in degrees in $[0, 360)$. \\
+isPenDown(), penUp(), penDown() & pen state. \\
+void setPen(char c) & pen character. \\
+\end{tabular}
+
+\spec{\texttt{boolean forward(int n)}}
+If \code{n < 0}, return \code{false} and do nothing. Otherwise, if the pen is
+down, first plot the current cell. Then repeat \code{n} times: move one cell
+in the direction of the heading, and plot the new cell if the pen is down.
+Return \code{true}. The turtle may leave the canvas: its position is still
+updated, and out-of-canvas cells are simply not drawn. With a \code{null}
+canvas the turtle moves but draws nothing. (Note that \code{forward(0)} draws
+a single dot.)
+
+\spec{\texttt{boolean turnRight(int degrees)}, \texttt{boolean turnLeft(int degrees)}}
+\code{degrees} may be any multiple of $45$, including negative values and values
+$\geq 360$. Otherwise, return \code{false} and do nothing.
+
+\spec{\texttt{toString()} and \texttt{equals(Turtle o)}}
+\code{toString} returns, for example, \code{Turtle at (8,1) heading 90 pen down '*'}
+(or \code{pen up}). Two turtles are \code{equals} when they have the same position,
+heading, pen state and pen character, \emph{and} draw on the same canvas object.
+
+\subsection*{2.3\quad A tiny drawing language}
+
+Add the method \code{boolean execute(String program)} to \code{Turtle}.
+A program is a sequence of tokens separated by one or more spaces:
+
+\begin{tabular}{>{\ttfamily}l l}
+F n & \code{forward(n)} \\
+L d \quad R d & \code{turnLeft(d)}, \code{turnRight(d)} \\
+U \quad D & pen up, pen down \\
+P c & \code{setPen(c)}, where \code{c} is a single character \\
+REPEAT k [ \dots{} ] & execute the body $k \geq 0$ times. The brackets are separate tokens. \\
+\end{tabular}
+
+In this basic version, a \code{REPEAT} body never contains another \code{REPEAT}.
+Commands run from left to right. If they all succeed, \code{execute} returns
+\code{true}. At the \emph{first} erroneous command it stops and returns
+\code{false}; commands already executed remain executed. A command is erroneous
+if it is unknown, if its argument is missing, if \code{forward} or a turn
+returns \code{false}, if the argument of \code{P} is not a single character, or
+if a \code{REPEAT} has a negative count, no \code{[}, or no matching \code{]}.
+The empty program and a blank program both return \code{true}. You may assume
+that numeric arguments are well-formed integers (\code{Integer.parseInt}).
+To split the program into tokens, you may use
+\code{String[] tokens = program.trim().split(" +");}.
+
+\spec{Test 1}
+\begin{lstlisting}
+class TurtleTest {
+    public static void main(String[] args) {
+        Canvas c = new Canvas(11, 7);
+        Turtle t = new Turtle(c);
+        System.out.println(t);
+        t.forward(2);
+        t.turnRight(90);
+        t.forward(3);
+        System.out.println(t);
+        System.out.println(c);
+        System.out.println("ink: " + c.inkCount());
+
+        Canvas sq = new Canvas(9, 6);
+        Turtle s = new Turtle(sq, 1, 4);
+        System.out.println(s.execute("REPEAT 4 [ F 3 R 90 ]"));
+        System.out.println(sq);
+        System.out.println(s);
+
+        Canvas dia = new Canvas(9, 9);
+        Turtle d = new Turtle(dia, 4, 0);
+        d.setPen('#');
+        System.out.println(d.execute("R 135   REPEAT 4 [ F 4 R 90 ]"));
+        System.out.println(dia);
+
+        Canvas small = new Canvas(5, 5);
+        Turtle o = new Turtle(small, 2, 2);
+        System.out.println(o.execute("F 4 R 180 F 6"));
+        System.out.println(small);
+        System.out.println(o);
+        System.out.println(o.execute("F 2 X 3") + " " + o);
+        System.out.println(o.execute("R 30") + " " + o.execute("F -2") + " "
+                           + o.execute("REPEAT 3 [ F 1") + " " + o.execute(""));
+        System.out.println(o.execute("L 450") + " " + o);
+    }
+}
+\end{lstlisting}
+Expected output (shown in two columns: read the left column first):
+
+\begin{minipage}[t]{0.46\textwidth}
+\begin{lstlisting}[style=out]
+Turtle at (5,3) heading 0 pen down '*'
+Turtle at (8,1) heading 90 pen down '*'
+...........
+.....****..
+.....*.....
+.....*.....
+...........
+...........
+...........
+ink: 6
+true
+.........
+.****....
+.*..*....
+.*..*....
+.****....
+.........
+Turtle at (1,4) heading 0 pen down '*'
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.53\textwidth}
+\begin{lstlisting}[style=out]
+true
+....#....
+...#.#...
+..#...#..
+.#.....#.
+#.......#
+.#.....#.
+..#...#..
+...#.#...
+....#....
+true
+..*..
+..*..
+..*..
+..*..
+..*..
+Turtle at (2,4) heading 180 pen down '*'
+false Turtle at (2,6) heading 180 pen down '*'
+false false false true
+true Turtle at (2,6) heading 90 pen down '*'
+\end{lstlisting}
+\end{minipage}
+
+\spec{Test 2: a spiral driven from Java, and two turtles sharing one canvas}
+\begin{lstlisting}
+Canvas sp = new Canvas(13, 13);
+Turtle p = new Turtle(sp);
+for (int i = 1; i <= 12; ++i) {
+    p.forward(i);
+    p.turnRight(90);
+}
+System.out.println(sp);
+System.out.println(p + ", ink: " + sp.inkCount());
+
+Canvas shared = new Canvas(15, 5);
+Turtle t1 = new Turtle(shared, 0, 1);
+Turtle t2 = new Turtle(t1);
+System.out.println(t1.equals(t2));
+t1.execute("R 90 F 14");
+t2.execute("P o R 135 F 3 L 45 F 11");
+System.out.println(t1.equals(t2));
+System.out.println(shared);
+\end{lstlisting}
+\begin{minipage}[t]{0.6\textwidth}
+\begin{lstlisting}[style=out]
+.............
+..***********
+..*.........*
+..*.*******.*
+..*.*.....*.*
+..*.*.***.*.*
+..*.*.*.*.*.*
+..*.*...*.*.*
+..*.*****.*.*
+..*.......*.*
+..*********.*
+............*
+*************
+Turtle at (0,12) heading 0 pen down '*', ink: 79
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.36\textwidth}
+\begin{lstlisting}[style=out]
+true
+false
+...............
+o**************
+.o.............
+..o............
+...oooooooooooo
+\end{lstlisting}
+\end{minipage}
+
+\subsection*{2.4\quad Animation frames (before running)}
+
+The following code records the frames of a small animation in two different
+ways. \emph{Before running it}, write down its complete output by hand. Then
+run it and compare. Question Q2.4 refers to this code.
+\begin{lstlisting}
+Canvas f = new Canvas(5, 3);
+Turtle ft = new Turtle(f, 0, 1);
+ft.turnRight(90);
+ArrayList<Canvas> good = new ArrayList<Canvas>();
+ArrayList<Canvas> bad = new ArrayList<Canvas>();
+for (int i = 0; i < 3; ++i) {
+    ft.forward(1);
+    good.add(new Canvas(f));
+    bad.add(f);
+}
+for (int i = 0; i < 3; ++i) {
+    System.out.println(good.get(i));
+    System.out.println(bad.get(i));
+    System.out.println();
+}
+System.out.println(good.get(2).equals(bad.get(0)) + " " + (good.get(2) == bad.get(0))
+                   + " " + (bad.get(0) == bad.get(2)));
+\end{lstlisting}
+
+\filbreak
+\subsection*{2.5\quad Puzzle: the firework}
+
+Starting from \code{new Turtle(new Canvas(11, 11))}, write a program for
+\code{execute} with \textbf{at most 25 tokens} that produces exactly this picture
+(the centre cell holds an \code{o}):\par
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[style=out]
+*....*....*
+.*...*...*.
+..*..*..*..
+...*.*.*...
+...........
+****.o.****
+...........
+...*.*.*...
+..*..*..*..
+.*...*...*.
+*....*....*
+\end{lstlisting}
+\end{minipage}
+
+\subsection*{2.6\quad Bonus: nested loops}
+
+Extend \code{execute} so that \code{REPEAT} bodies may contain other
+\code{REPEAT}s, to any depth. Brackets must then be matched properly. With
+\code{new Turtle(new Canvas(19, 5), 1, 3)}, the program
+\code{REPEAT 3 [ REPEAT 4 [ F 2 R 90 ] U R 90 F 4 L 90 D ]} must return
+\code{true} and draw:
+\begin{lstlisting}[style=out]
+...................
+.***.***.***.......
+.*.*.*.*.*.*.......
+.***.***.***.......
+...................
+\end{lstlisting}
+
+\subsection*{2.7\quad Questions}
+\begin{questions}
+  \item \emph{(Copy semantics.)} The copy constructor of \code{Canvas} copies the
+        grid, but the copy constructor of \code{Turtle} shares the canvas.
+        Justify \emph{both} choices from what each object represents. Draw the
+        memory diagram right after \code{Turtle t2 = new Turtle(t1);} in Test~2.
+        What would Test~2 print if \code{Turtle(Turtle)} copied the canvas instead?
+  \item \emph{(Identity vs.\ equality.)} \code{Turtle.equals} compares canvases with
+        \code{==}, not with \code{Canvas.equals}. Describe a situation where the two
+        tests disagree. Argue which one matches the meaning ``these two turtles
+        are interchangeable''.
+  \item \emph{(Constructors.)} Explain precisely why the naive delegation
+        \begin{center}\code{this(canvas, canvas.getWidth() / 2, canvas.getHeight() / 2);}\end{center}
+        crashes for a \code{null} canvas. Why can you not simply put an \code{if}
+        before \code{this(...)}? How did you solve it? Finally, why does the
+        call \code{new Turtle(null)} not even compile, so that one must write
+        \code{new Turtle((Canvas) null)}?
+  \item \emph{(References and end of life.)} For the code of 2.4: how many
+        \code{Canvas} objects exist after the loop? Suppose that after the loop
+        we execute \code{f = null; bad = null;}. Which \code{Canvas} objects become
+        eligible for garbage collection? Be careful: count every reference
+        that still points to each object.
+  \item \emph{(Encapsulation.)} Suppose \code{Canvas} offered
+        \begin{center}\texttt{public char[][] getCells() \char123\ return cells; \char125}\end{center}
+        Write two client
+        lines that break a property every other method relies on, and name a
+        method that would then crash. Relate this to the
+        \code{JeuMorpion.getGrille()} example of Lesson~5.
+  \item \emph{(Edge cases.)} What is \texttt{-1 \% 8} in Java? Show step by step how
+        your heading update handles \code{turnLeft(450)} from heading $180$, and
+        \code{turnRight(-45)} from heading $0$.
+\end{questions}
+
+%======================================================================
+\exercise{MiniGit: a tiny version-control system}{hard}{5--6 hours}
+
+Version-control systems such as \texttt{git} record \emph{snapshots} of your
+files over time. In this exercise you build a miniature one for a single text
+document. Every bug in it comes from an object that should have been copied but
+was shared, or should have been shared but was copied, so this exercise is a
+thorough test of Lessons 8 and 9.
+
+\paragraph{Model.} A \code{Repository} owns a \emph{working copy} (the
+\code{Document} that the user edits) and a history of \code{Commit}s. A commit
+is a frozen snapshot of the document, with an id, a message and a
+\emph{parent} commit (\code{null} for the very first commit). The repository
+also knows its \emph{head}, the commit the working copy was last synchronised
+with. After a checkout of an old commit, new commits start a new branch, so the
+history is a tree. In the test below it looks like this:
+\[
+  \begin{array}{ccccc}
+     & & 2 & \leftarrow & 3 \\
+     & \nearrow & & & \\
+   1 & & & & \\
+     & \nwarrow & & & \\
+     & & 4 & \leftarrow & 5
+  \end{array}
+  \qquad\text{(arrows point from child to parent)}
+\]
+
+\paragraph{Warm-up (before coding).} Suppose the \code{Commit} constructor were
+written with \code{this.snapshot = content;} instead of making a copy.
+Everything else is correct. What would the following code print? Answer
+with a memory diagram (this is Q3.1).
+\begin{lstlisting}
+Repository repo = new Repository();
+Document doc = repo.getWorkingCopy();
+doc.appendLine("v1");
+System.out.println(repo.commit("first"));
+doc.setLine(0, "v2");
+System.out.println(repo.commit("second"));
+System.out.println(repo.log());
+\end{lstlisting}
+
+\subsection*{3.1\quad The class \texttt{Document} (mutable)}
+
+A document is a list of lines, stored in a \code{private ArrayList<String>}.
+No line is ever \code{null}.
+
+\begin{tabular}{@{}S{0.40\textwidth} D{0.55\textwidth}@{}}
+Document() & empty document. \\
+Document(String[] lines) & a document with these lines. The array itself must not be kept. \\
+Document(Document other) & an independent copy. \\
+int lineCount() & number of lines. \\
+String getLine(int i) & line \code{i}, or \code{null} if \code{i} is invalid. \\
+boolean appendLine(String s) & adds \code{s} at the end. \\
+boolean insertLine(int i, String s) & inserts \code{s} before line \code{i}, where $0 \le i \le$ \code{lineCount()}. \\
+boolean setLine(int i, String s) & replaces line \code{i}. \\
+boolean removeLine(int i) & removes line \code{i}. \\
+void replaceContentWith(Document other) & makes \code{this} contain a copy of the lines of \code{other}. Does nothing if \code{other} is \code{null}. Must also work when \code{other == this}. \\
+String toString() & each line followed by \nl (empty document: \code{""}). \\
+boolean equals(Document o) & same lines in the same order. \\
+\end{tabular}
+
+All modifiers return \code{false} and change nothing when the index is invalid
+or the line is \code{null}. Otherwise they return \code{true}.
+
+\subsection*{3.2\quad The class \texttt{Commit} (immutable)}
+
+\begin{tabular}{@{}S{0.40\textwidth} D{0.55\textwidth}@{}}
+Commit(int id, String message, Document content, Commit parent) & stores an \emph{independent} copy of \code{content}. Later changes to \code{content} must not affect the commit. \\
+getId(), getMessage(), getParent() & accessors. \\
+Document getSnapshot() & a \emph{new independent copy} of the stored document. \\
+boolean hasSameContentAs(Document d) & compares with \code{d} \emph{without} making a copy. \\
+int depth() & number of ancestors (the root has depth $0$). \\
+boolean isAncestorOf(Commit other) & \code{true} iff this very object is \code{other} or one of its ancestors. \\
+String toString() & \code{[3] Serving suggestion (parent 2)} or \code{[1] First version (root)}. \\
+\end{tabular}
+
+\subsection*{3.3\quad The class \texttt{Repository}}
+
+A repository has a working document, a head (\code{null} before the first
+commit), the list of all its commits, and a counter for the next id. Ids are
+$1, 2, 3, \dots$ in creation order. They are assigned by the repository
+itself (no \code{static} attribute).
+
+\begin{tabular}{@{}S{0.40\textwidth} D{0.55\textwidth}@{}}
+Repository() & empty working document, no commit. \\
+Document getWorkingCopy() & the working document \emph{itself} (not a copy), so that clients can edit it. Throughout the life of the repository, it always returns the \emph{same object}. \\
+int getHeadId() & id of the head, or $-1$. \\
+boolean hasUncommittedChanges() & without a head: whether the working copy is non-empty. Otherwise: whether it differs from the head's snapshot. \\
+int commit(String message) & if there is nothing to commit, returns $-1$ and does nothing. Otherwise creates a commit (next id, parent = current head), makes it the head and returns its id. \\
+boolean checkout(int id) & returns \code{false} and does nothing if \code{id} is unknown or if there are uncommitted changes. Otherwise the commit becomes the head and the working copy receives its content, \emph{in place}. \\
+String log() & the head, then its parent, and so on up to the root, one \code{toString()} per line, separated by \nl, no trailing newline. Without commits: \code{(no commits)}. \\
+int mergeBase(int a, int b) & id of the \emph{deepest} commit that is an ancestor of both (every commit is its own ancestor); $-1$ if an id is unknown. \\
+String diff(int a, int b) & line diff from snapshot \code{a} to snapshot \code{b} (below); \code{null} if an id is unknown. \\
+\end{tabular}
+
+\spec{The diff algorithm}
+Let $a_0, \dots, a_{n-1}$ be the lines of the first snapshot and
+$b_0, \dots, b_{m-1}$ the lines of the second one. Define $L[i][j]$ as the
+length of a longest common subsequence of $a_i, \dots, a_{n-1}$ and
+$b_j, \dots, b_{m-1}$:
+\[
+  L[n][j] = L[i][m] = 0, \qquad
+  L[i][j] =
+  \begin{cases}
+    1 + L[i{+}1][j{+}1] & \text{if } a_i \text{ equals } b_j,\\
+    \max\bigl(L[i{+}1][j],\, L[i][j{+}1]\bigr) & \text{otherwise.}
+  \end{cases}
+\]
+Fill the table in a \code{int[n+1][m+1]} array. Then start with $i = j = 0$ and
+repeat while $i < n$ or $j < m$:
+\begin{enumerate}[itemsep=0pt]
+  \item if $i < n$, $j < m$ and $a_i$ equals $b_j$: output \texttt{"\ \ "} $+\,a_i$ (two spaces), then increment $i$ and $j$;
+  \item else if $j = m$, or ($i < n$ and $L[i{+}1][j] \geq L[i][j{+}1]$): output \code{"- "} $+\,a_i$, then increment $i$;
+  \item else output \code{"+ "} $+\,b_j$, then increment $j$.
+\end{enumerate}
+Each output line ends with \nl. The tie-break in rule~2
+(removals before additions) is part of the specification: it makes the output
+unique.
+
+\subsection*{3.4\quad Test}
+\begin{lstlisting}
+class MiniGitTest {
+    public static void main(String[] args) {
+        Repository repo = new Repository();
+        Document doc = repo.getWorkingCopy();
+        System.out.println(repo.log());
+        System.out.println(repo.commit("Empty"));
+
+        doc.appendLine("PANCAKES");
+        doc.appendLine("200 g flour");
+        doc.appendLine("2 eggs");
+        doc.appendLine("300 ml milk");
+        System.out.println(repo.commit("First version"));
+        System.out.println(repo.commit("Nothing new"));
+
+        doc.insertLine(3, "1 pinch of salt");
+        doc.setLine(4, "350 ml milk");
+        System.out.println(repo.commit("Salt, more milk"));
+        doc.appendLine("Serve with maple syrup");
+        System.out.println(repo.commit("Serving suggestion"));
+        System.out.println(repo.log());
+
+        doc.removeLine(0);
+        System.out.println(repo.checkout(1));             // refused
+        doc.insertLine(0, "PAN" + "CAKES".substring(0));  // built at run time
+        System.out.println(repo.hasUncommittedChanges());
+        System.out.println(repo.checkout(1));
+        System.out.print(doc);
+        System.out.println(doc == repo.getWorkingCopy());
+
+        doc.setLine(0, "VEGAN PANCAKES");
+        doc.setLine(2, "1 ripe banana");
+        doc.setLine(3, "300 ml oat milk");
+        System.out.println(repo.commit("Vegan variant"));
+        doc.appendLine("Serve with berries");
+        System.out.println(repo.commit("Berries"));
+        System.out.println(repo.log());
+
+        System.out.println(repo.mergeBase(3, 5) + " " + repo.mergeBase(2, 3) + " "
+                           + repo.mergeBase(4, 4) + " " + repo.mergeBase(1, 9));
+        System.out.print(repo.diff(1, 2));
+        System.out.println("--");
+        System.out.print(repo.diff(3, 5));
+        System.out.println("--");
+        System.out.println(repo.diff(2, 7));
+        System.out.println(repo.checkout(3) + " " + doc.lineCount() + " "
+                           + doc.getLine(5) + " " + doc.getLine(6));
+    }
+}
+\end{lstlisting}
+Expected output (two columns):
+
+\begin{minipage}[t]{0.45\textwidth}
+\begin{lstlisting}[style=out]
+(no commits)
+-1
+1
+-1
+2
+3
+[3] Serving suggestion (parent 2)
+[2] Salt, more milk (parent 1)
+[1] First version (root)
+false
+false
+true
+PANCAKES
+200 g flour
+2 eggs
+300 ml milk
+true
+4
+5
+[5] Berries (parent 4)
+[4] Vegan variant (parent 1)
+[1] First version (root)
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.5\textwidth}
+\begin{lstlisting}[style=out]
+1 2 4 -1
+  PANCAKES
+  200 g flour
+  2 eggs
+- 300 ml milk
++ 1 pinch of salt
++ 350 ml milk
+--
+- PANCAKES
++ VEGAN PANCAKES
+  200 g flour
+- 2 eggs
+- 1 pinch of salt
+- 350 ml milk
+- Serve with maple syrup
++ 1 ripe banana
++ 300 ml oat milk
++ Serve with berries
+--
+null
+true 6 Serve with maple syrup null
+\end{lstlisting}
+\end{minipage}
+
+\subsection*{3.5\quad Play with it: an interactive shell}
+
+Write a class \code{MiniGitShell} whose \code{main} reads commands from the
+keyboard (\code{Scanner}) and acts on a \code{Repository}, so that you can version
+your own texts:
+\begin{center}
+\texttt{show, append <text>, insert <i> <text>, set <i> <text>, delete <i>,}\\
+\texttt{status, commit <message>, log, checkout <id>, diff <a> <b>, quit}
+\end{center}
+The exact messages are up to you. The shell must never crash on an invalid
+index or id: it reports the failure instead. You may assume that numeric
+arguments are well-formed integers.
+
+\subsection*{3.6\quad Questions}
+\begin{questions}
+  \item \emph{(Warm-up, before coding.)} Answer the warm-up above. Then run it
+        on your correct implementation and explain the difference.
+  \item \emph{(Interface design.)} \code{getWorkingCopy} returns an internal
+        reference, while \code{getSnapshot} returns a copy. Is this
+        inconsistent? Justify both choices: which object is \emph{meant} to be
+        modified by clients, and which property of the system would a leaking
+        \code{getSnapshot} destroy? Write a three-line client snippet that
+        demonstrates the damage.
+  \item \emph{(In-place update.)} What exactly does the line
+        \code{doc == repo.getWorkingCopy()} of the test check?
+        Describe the scenario in which a user silently loses edits if
+        \code{checkout} did \code{working = c.getSnapshot();} instead.
+  \item \emph{(Safe sharing.)} \code{getParent()} returns an internal reference
+        without copying it. Is this an encapsulation leak like the one in
+        Q3.2? Commit~1 is shared by two branches. Why is this sharing not a
+        problem, while sharing a \code{Document} would be?
+  \item \emph{(Identity vs.\ equality.)} Why must \code{isAncestorOf} and
+        \code{mergeBase} compare commits with \code{==}? Construct two distinct
+        commits that an attribute-by-attribute \code{equals} would declare equal,
+        and explain why \code{mergeBase} could then return a wrong answer.
+  \item \emph{(Strings.)} Why does the test build a line with
+        \code{"PAN" + "CAKES".substring(0)}? Which lines of the expected output
+        would change if \code{Document.equals} compared lines with \code{==},
+        and how?
+  \item \emph{(Depth of a copy.)} \code{Document(Document)} copies the
+        \code{ArrayList} but shares the \code{String} objects. Why is this deep
+        enough? What would have to change if lines were stored as mutable
+        objects (for example \code{StringBuilder})?
+  \item \emph{(Self-assignment.)} Trace \code{doc.replaceContentWith(doc)} on an
+        implementation that first clears its list and then copies the lines of
+        \code{other}. What is lost? Explain how your version avoids this.
+  \item \emph{(Cost.)} With $c$ commits of a document of about $\ell$ lines,
+        how much memory do the snapshots use? What are the time and memory costs
+        of \code{diff} on documents of $n$ and $m$ lines? Propose (without
+        coding it) a representation of commits that uses less memory, and say
+        which public methods would become slower. Explain why the public
+        interface of \code{Repository} would not need to change.
+\end{questions}
+
+\subsection*{3.7\quad Going further (open-ended, ungraded)}
+\begin{itemize}[itemsep=2pt]
+  \item \textbf{Named branches.} A \code{Branch} has a name and a head commit
+        that moves forward on each commit. Explain why \code{Branch} must be
+        mutable while \code{Commit} is immutable, and what that implies for
+        sharing and copying.
+  \item \textbf{Three-way merge.} Given two heads $A$ and $B$ and their base
+        $M = $ \code{mergeBase(A, B)}, combine the changes $M \to A$ and $M \to B$.
+        Report a \emph{conflict} when both modify the same line of $M$.
+  \item \textbf{Blame.} For each line of the head's snapshot, find the id of the
+        commit that introduced it.
+\end{itemize}
+
+\end{document}

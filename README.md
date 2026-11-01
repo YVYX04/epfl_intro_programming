@@ -44,6 +44,7 @@ Each week is worked on its own branch (e.g. `week7`) and merged into `main` when
 | 03   | Conditionals and loops             | 10 exercises (`Degree2`, `GCD`, `Rebonds1/2`, …)                          |
 | 04   | Strings and arrays                 | `Crypto` (Caesar cipher), `MostFrequent`, statement in `ps_04.pdf`        |
 | 05   | *Five Java Missions* (custom set)  | Mission 1 `Touchdown` (lunar lander simulation, optimal-policy search still to do) |
+| 07   | Classes and objects                | `Fraction` (exact arithmetic, harmonic numbers), `Canvas` + `Turtle` (ASCII turtle graphics, tiny drawing language) |
 
 ## Running
 
@@ -67,3 +68,7 @@ Notebooks need Jupyter with a Java kernel ([JJava](https://github.com/dflib/jjav
 ```sh
 jupyter lab mooc_i/06_functions/notes.ipynb
 ```
+
+---
+
+*Learning by doing, one week at a time.*
