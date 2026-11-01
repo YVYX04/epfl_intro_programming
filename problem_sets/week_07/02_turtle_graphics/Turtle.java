@@ -152,6 +152,127 @@ public class Turtle
 
     }
 
+    /**
+     * A program is a sequence of tokens separated by one or more spaces. This method executes the program. The following tokens are admitted:
+     * F n : forward(n)
+     * L d R d : turnLeft(d), turnRight(d)
+     * U D : pen up, pen down
+     * P c : setPen(c), where c is a single char
+     * REPEAT k [...] : execute the body k >= 0 times. The brackets are separate tokens.
+     * @param program
+     * @return
+     */
+    public boolean execute(String program)
+    {
+        // handle null, empty or blank program
+        if(program == null || program.trim().isEmpty()) { return true; }
+
+        // extract tokens
+        String[] tokens = program.trim().split(" +");
+        int n = tokens.length;
+
+        // execute the program
+        int i = 0;
+        while(i < n)
+        {
+            String command = tokens[i];
+            ++i;
+
+            switch(command)
+            {
+                case "F":
+                    if(!forward(intArgument(tokens, i, command))) return false;
+                    ++i;
+                    break;
+
+                case "L":
+                    if(!turnLeft(intArgument(tokens, i, command))) return false;
+                    ++i;
+                    break;
+
+                case "R":
+                    if(!turnRight(intArgument(tokens, i, command))) return false;
+                    ++i;
+                    break;
+
+                case "U":
+                    penUp();
+                    break;
+
+                case "D":
+                    penDown();
+                    break;
+
+                case "P":
+                {
+                    if(i >= n) throw new IllegalArgumentException("missing argument after P");
+                    String arg = tokens[i];
+                    if(arg.length() != 1) throw new IllegalArgumentException("the argument of P must be a single char, got: " + arg);
+                    setPen(arg.charAt(0));
+                    ++i;
+                    break;
+                }
+
+                case "REPEAT":
+                {
+                    // repeat count
+                    int k = intArgument(tokens, i, command);
+                    if(k < 0) throw new IllegalArgumentException("REPEAT count must be >= 0, got: " + k);
+                    ++i;
+
+                    // opening bracket
+                    if(i >= n || !tokens[i].equals("[")) throw new IllegalArgumentException("REPEAT must be followed by '['");
+                    ++i;
+                    int idxStart = i;
+
+                    // find the matching ']' (counting depth so nested REPEATs work)
+                    int depth = 1;
+                    while(i < n && depth > 0)
+                    {
+                        if(tokens[i].equals("[")) ++depth;
+                        if(tokens[i].equals("]")) --depth;
+                        ++i;
+                    }
+                    if(depth > 0) throw new IllegalArgumentException("REPEAT has no matching ']'");
+                    int idxEnd = i - 1; // position of the matching ']'
+
+                    // body of the loop
+                    String body = "";
+                    for(int j = idxStart; j < idxEnd; ++j)
+                    {
+                        body = body + tokens[j] + " ";
+                    }
+
+                    // execute the body k times
+                    for(int rep = 0; rep < k; ++rep)
+                    {
+                        if(!execute(body)) return false;
+                    }
+                    break;
+                }
+
+                default:
+                    throw new IllegalArgumentException("The program is misspecified, unknown command: " + command);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Reads tokens[i] as the integer argument of command.
+     * Throws IllegalArgumentException if it is missing or not an integer.
+     */
+    private static int intArgument(String[] tokens, int i, String command)
+    {
+        if(i >= tokens.length) throw new IllegalArgumentException("missing argument after " + command);
+        try {
+            return Integer.parseInt(tokens[i]);
+        } catch(NumberFormatException e) {
+            throw new IllegalArgumentException("the argument of " + command + " must be an integer, got: " + tokens[i]);
+        }
+    }
+
     // ___ HELPERS ___
     public String toString()
     {
