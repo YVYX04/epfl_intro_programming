@@ -144,6 +144,34 @@ public class World {
         return out;
     }
 
+    private static final String RESET  = "\033[0m";
+    private static final String DIM    = "\033[2m";
+    private static final String ACCENT = "\033[38;5;209m";
+
+    /**
+     * Redraws the whole world in place (top-left of the terminal) with the current tick.
+     * Needs a real terminal: IDE consoles usually ignore the cursor-move escape code.
+     */
+    public void cliRender() {
+        StringBuilder sb = new StringBuilder();
+        String bar = "─".repeat(nCols);
+
+        sb.append("\033[H"); // cursor to top-left, draw over the last frame
+        sb.append(DIM).append('╭').append(bar).append('╮').append(RESET).append('\n');
+        for (int i = 0; i < nRows; i++) {
+            sb.append(DIM).append('│').append(RESET)
+              .append(renderRow(i))
+              .append(DIM).append('│').append(RESET).append('\n');
+        }
+        sb.append(DIM).append('╰').append(bar).append('╯').append(RESET).append('\n');
+        sb.append(' ').append(ACCENT).append("✻ ").append(RESET)
+          .append("time ").append(tick)
+          .append(DIM).append(" · ctrl+c to quit").append(RESET);
+        sb.append("\033[J"); // erase any leftovers below
+        System.out.print(sb);
+        System.out.flush();
+    }
+
 
     // ___ HELPERS ___
     public boolean isInside(int i, int j) {
@@ -160,6 +188,8 @@ public class World {
         switch(symbol) {
             case '#':
                 return new Wall();
+            case '.':
+                return new Sand();
             default:
                 return new Air();
         }
