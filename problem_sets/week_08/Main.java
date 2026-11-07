@@ -18,7 +18,7 @@ public class Main {
         System.out.print("\033[2J"); // clear the screen once before the first frame
         for (int t = 0; t < 10; t++) {
             w1.cliRender();
-            Thread.sleep(500);
+            Thread.sleep(300);
             w1.step();
         }
         w1.cliRender();
@@ -44,10 +44,52 @@ public class Main {
         System.out.print("\033[2J"); // clear the screen once before the first frame
         for (int t = 0; t < 30; t++) {
             w2.cliRender();
-            Thread.sleep(500);
+            Thread.sleep(125);
             w2.step();
         }
         w2.cliRender();
+        System.out.println();
+
+        // ===== SCENE 03: LAYERS =====
+        String[] layers = {
+                "#########",
+                "#.......#",
+                "#~~~~~~~#",
+                "#ooooooo#",
+                "#       #",
+                "#########"
+        };
+
+        // build a world from the above scene
+        World w3 = new World(layers);
+        System.out.print("\033[2J"); // clear the screen once before the first frame
+        for (int t = 0; t < 5; t++) {
+            w3.cliRender();
+            Thread.sleep(500);
+            w3.step();
+        }
+        w3.cliRender();
+        System.out.println();
+
+        // ===== SCENE 04: DAM =====
+        String[] dam = {
+                "############",
+                "#~~~#      #",
+                "#~~~#      #",
+                "#~~~#      #",
+                "#~~~       #",
+                "############"
+        };
+
+        // build a world from the above scene
+        World w4 = new World(dam);
+        System.out.print("\033[2J"); // clear the screen once before the first frame
+        for (int t = 0; t < 15; t++) {
+            w4.cliRender();
+            Thread.sleep(500);
+            w4.step();
+        }
+        w4.cliRender();
         System.out.println();
     }
 

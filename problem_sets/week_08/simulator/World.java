@@ -190,6 +190,10 @@ public class World {
                 return new Wall();
             case '.':
                 return new Sand();
+            case '~':
+                return new Water();
+            case 'o':
+                return new Oil();
             default:
                 return new Air();
         }
