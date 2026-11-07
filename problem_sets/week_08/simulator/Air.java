@@ -1,13 +1,17 @@
 package simulator;
 
 public class Air extends Element {
-    
-    // ___ CONSTRUCTOR ___
+
+    // ___ CONSTRUCTORS ___
     /**
      * Default constructor
      */
     public Air()
     {
-        super.this("air", ' ', 0);
+        super("air", ' ', 2);
     }
+
+    // ___ OVERRIDE ___
+    @Override
+    public boolean isFluid() { return true; }
 }

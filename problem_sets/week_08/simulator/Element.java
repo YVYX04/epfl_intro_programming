@@ -6,61 +6,42 @@ package simulator;
  */
 public class Element
 {
-    // ___ class variables ___
-    static final private char[] SYMBOLS = {' ', '#', '=', '*', '.', '~', 'o', '"'};
-    static final private String[] NAMES = {"air", "wall", "wood", "fire", "sand", "water", "oil", "smoke"};
-    static final private int[] DENSITIES = {2, 100, 30, 0, 10, 6, 4, 1};
-    static final private boolean[] IS_FLUID = {true, false, false, false, false, true, true, true};
-    static final private boolean[] IS_FLAMMABLE = {false, false, true, false, false, false, true, false};
-    static final private int[] BURN_UNITS = {10, 3};
-
-
     // ___ member variables ___
     private String name; // name of the element
     private char symbol; // symbol of the element
     private int density; // density of the element
-    private int last_udpated = -1; // last time of update, each element is init at t = -1.
-    private boolean is_fluid;
-    private boolean is_flammable;
-    private int burn_unit = 0;
+    private int last_updated = -1;
 
     // ___ CONSTRUCTORS ___
+    /**
+     * Main constructor
+     * @param name : name of the element
+     * @param symbol : symbol of the element
+     * @param density : density of the element
+     */
     public Element(String name, char symbol, int density)
     {
         // basic member variables
         this.name = name;
         this.symbol = symbol;
         this.density = density;
+    }
 
-        // check name exists
-        int idx_name = indexName(name);
-        if(idx_name == -1) {
-            throw new IllegalArgumentException("Element not found! Got : " + name);
-        }
+    /**
+     * Copy constructor
+     * @param o: reference of the element to copy
+     */
+    public Element(Element o) {
 
-        // check symbol match name
-        if(SYMBOLS[idx_name] != symbol)
-        {
-            throw new IllegalArgumentException("Error of initialization for symbol; element " + name + " is not " + symbol);
-        }
+        // copy base parameters
+        this(o.name, o.symbol, o.density);
 
-        // check density match name
-        if(DENSITIES[idx_name] != density)
-        {
-            throw new IllegalArgumentException("Error of initialization for density, element " + name + " is not " + density + " dense.");
-        }
-
-        // assign other attributes
-        is_fluid = IS_FLUID[idx_name];
-        is_flammable = IS_FLAMMABLE[idx_name];
-        if(this.isFlammable()) {
-            burn_unit = (idx_name == 2) ? BURN_UNITS[0] : BURN_UNITS[1];
-        }
-        
-
+        // copy state
+        this.last_updated = o.last_updated;
     }
 
     // ___ GETTERS ___
+    // Note: default behavior implemented here, see Override in subclasses for details.
     public String getName()
     {
         return name;
@@ -75,33 +56,39 @@ public class Element
     }
     public boolean isFluid()
     {
-        return is_fluid;
+        return false;
     }
     public boolean isFlammable()
     {
-        return is_flammable;
+        return false;
     }
     public int getBurnTime()
     {
-        return burn_unit;
+        return 0;
     }
 
     // ___ SETTERS ___
     /**
-     * Mark when the element was last updated
-     * @param tick : last time t of update
+     * Records that this element was updated at this tick.
+     * @param tick : tick of the update
      */
     public void markUpdated(int tick)
     {
-        last_udpated = tick;
+        last_updated = tick;
     }
     public boolean extinguishesFire()
     {
-        return (name.equals("water"));
-    } 
+        return false;
+    }
+
+    /**
+     * 'update' is called by the world when it is this element’s turn to act; the element is at (row,col)
+     * in w. It returns true if and only if, during this call, the element moved to another cell or was
+     * replaced.
+     */
     public boolean update(World w, int row, int col)
     {
-        // TODO
+        // general behavior of matter that does nothing
         return false;
     }
 
@@ -112,20 +99,11 @@ public class Element
     /**
      * Return true if the element was last updated at this tick.
      * @param tick
-     * @return
+     * @return boolean
      */
-    public boolean wasUpdated(int tick)
+    public boolean wasUpdatedAt(int tick)
     {
-        return (tick == last_udpated);
-    }
-
-    private int indexName(String name)
-    {
-        for(int i = 0; i < NAMES.length; ++i)
-        {
-            if(name.equals(NAMES[i])) return i;
-        }
-        return -1; // not found
+        return (tick == last_updated);
     }
 
     // ___ OVERRIDE ___
