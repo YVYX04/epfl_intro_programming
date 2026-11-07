@@ -1,0 +1,1137 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{listings}
+\usepackage{upquote}
+\usepackage{forest}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+% ---------- code ----------
+\lstset{
+  language=Java,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape,
+  columns=fullflexible,
+  keepspaces=true,
+  upquote=true,
+  showstringspaces=false,
+  frame=lines,
+  framesep=4pt,
+  xleftmargin=0pt,
+  xrightmargin=0pt,
+  aboveskip=0.8em,
+  belowskip=0.8em,
+  numbers=none
+}
+\newcommand{\code}[1]{\texttt{#1}}
+\fvset{fontsize=\small}
+
+% ---------- checkpoints (renders of the world) ----------
+\newenvironment{checkpoint}[1]
+  {\begin{tabular}[t]{@{}l@{}}\footnotesize #1\\[2pt]}
+  {\end{tabular}}
+
+% ---------- questions ----------
+\newcounter{qcount}
+\newcommand{\Q}{\refstepcounter{qcount}\textbf{Q\theqcount.}\ }
+\newcommand{\task}[1]{\par\medskip\textbf{Task #1.}\ }
+\newcommand{\beyond}{\textsuperscript{$\star$}}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries Mini-project: a falling-sand sandbox}\\[0.6em]
+  Introduction to Programming --- Inheritance\\[0.3em]
+  {\small Estimated time: 4 hours \quad$\cdot$\quad}
+\end{center}
+
+\vspace{0.5em}
+
+\section*{Overview}
+
+You will build a small \emph{falling-sand} simulator: a rectangular world of cells in which sand
+piles up, water spreads, oil floats on water, wood catches fire and smoke rises and fades away.
+The world is printed in the terminal as ASCII art, one frame per tick, so you can watch it evolve.
+
+The interesting part is not the physics, which is deliberately naive, but the \emph{shape of the
+code}. Each kind of matter is a class in an inheritance hierarchy. The world only ever manipulates
+variables of type \code{Element}, and every difference in behaviour comes from redefining methods
+(dynamic binding). The project exercises, in order of appearance:
+\begin{itemize}[nosep]
+  \item the \emph{is-a} relation and the definition of sub-classes with \code{extends} (lesson 10);
+  \item access rights \code{private}, \code{protected}, \code{public} in a hierarchy (lesson 11);
+  \item redefinition of methods, \code{super.}\emph{method}, and attribute hiding, i.e.\ \emph{masquage} (lesson 12);
+  \item constructors in a hierarchy, \code{super(\ldots)}, \code{this(\ldots)}, the order of construction (lesson 13);
+  \item static versus dynamic binding and heterogeneous collections (lesson 14);
+  \item and, from earlier weeks: encapsulation, copy constructors, \code{toString}, reference
+        semantics, two-dimensional arrays and strings.
+\end{itemize}
+
+\paragraph{Time budget.}
+\begin{center}
+\begin{tabular}{@{}llr@{}}
+\toprule
+Part & Content & Time \\
+\midrule
+A & Warm-up on paper: predict, then justify & 30 min \\
+B & Elements and the world & 35 min \\
+C & Falling particles & 40 min \\
+D & Liquids & 40 min \\
+E & Fire and smoke & 45 min \\
+F & Parallel futures: copying a world & 30 min \\
+G & Your own scene, design table, reflection & 20 min \\
+\midrule
+ & Total & 4 h \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{How to check yourself.}
+Every rule in Section~\ref{sec:spec} is deterministic: there is no randomness. The expected
+renders shown in each part (the \emph{checkpoints}) were produced by a reference implementation of
+exactly this specification. If your output differs, find the \emph{first} tick at which it differs:
+that tick and that cell are your best debugging clue. Questions are numbered
+Q1, Q2, \ldots; answer them in a file \code{answers.txt} \emph{before} looking anything up.
+A star\beyond{} marks a question that goes slightly beyond what the slides state explicitly and
+asks you to reason from the rules you know.
+
+\paragraph{Design constraints.} These are part of the specification and are what the project
+actually tests. Re-read them at the start of every part.
+\begin{enumerate}[label=\textbf{R\arabic*.},leftmargin=2.6em]
+  \item \textbf{Course material only.} Use only BOOC I and weeks 1--3 of BOOC II. In particular:
+        no \code{abstract}, no \code{interface}, no \code{instanceof}, no casts between class
+        types, no \code{getClass()}, no \code{static} attributes, no exceptions (except in the
+        helper of Appendix~\ref{app:helper}). Static methods are allowed only in your main class,
+        as in BOOC I. If you feel that one of these would make the code better, write a comment
+        saying where and why: this is a valuable observation for weeks 4--6.
+  \item \textbf{Encapsulation.} All attributes are \code{private}. If you declare any member
+        \code{protected}, justify it in a one-line comment next to it.
+  \item \textbf{No type tests.} \code{World}, \code{Particle}, \code{Liquid}, \code{Gas} and
+        \code{Fire} never test what kind of element they are dealing with: no comparison of
+        \code{getName()} or \code{getSymbol()} to decide behaviour (the only exceptions are
+        \code{World.count} and the parsing method). Differences in behaviour must come from
+        redefinition.
+  \item \textbf{Concrete classes are named in few places.} The names \code{Air}, \code{Wall},
+        \code{Wood}, \code{Fire}, \code{Sand}, \code{Water}, \code{Oil}, \code{Smoke} may appear only
+        in: the parsing method of \code{World}; \code{Fire} (which creates \code{Fire} and
+        \code{Smoke}); \code{Gas} (which creates \code{Air}); each class's own constructors and
+        \code{copy()} method; and your main class.
+  \item \textbf{No duplication.} The falling algorithm of Section~\ref{sec:particles} is written
+        exactly once. Each \code{toString} that extends another one uses \code{super.toString()}.
+  \item \textbf{Constructors.} \code{Element} has no default constructor. Every constructor of
+        every sub-class begins with an explicit \code{super(\ldots)} or \code{this(\ldots)}.
+\end{enumerate}
+
+% =====================================================================
+\section{Part A --- Warm-up on paper (30 min)}
+
+Answer without a computer, then check by compiling. For every answer, write \emph{one sentence of
+justification} naming the rule you used (``static type'', ``dynamic type'', ``implicit
+\code{super()}'', \ldots). A correct output with a wrong reason counts as wrong.
+
+\subsection*{A1. Order of construction}
+\begin{lstlisting}
+class A {
+    public A()      { System.out.print("A"); }
+    public A(int x) { this(); System.out.print("a" + x); }
+}
+class B extends A {
+    public B()      { System.out.print("B"); }
+    public B(int x) { super(x + 1); System.out.print("b" + x); }
+}
+class C extends B {
+    public C()      { super(2); System.out.print("C"); }
+}
+\end{lstlisting}
+\Q What do \code{new C()} and \code{new B()} print?
+
+\Q The constructor \code{A()} is deleted and nothing else changes. Which lines no longer compile,
+and why? Which constructors are unaffected?
+
+\subsection*{A2. A band of instruments}
+\begin{lstlisting}
+class Instrument {
+    private String name;
+    public Instrument(String name) { this.name = name; }
+    public String getName()  { return name; }
+    public String describe() { return "instrument " + name; }
+    public String play()     { return "..."; }
+    public String concert()  { return describe() + " plays " + play(); }
+}
+class StringInstrument extends Instrument {
+    private int strings;
+    public StringInstrument(String name, int strings) {
+        super(name);
+        this.strings = strings;
+    }
+    public String describe() {
+        return super.describe() + " with " + strings + " strings";
+    }
+}
+class Guitar extends StringInstrument {
+    public Guitar() { super("guitar", 6); }
+    public String play() { return "strum"; }
+}
+class Harp extends StringInstrument {
+    public Harp() { super("harp", 47); }
+    public String describe() { return "a big " + super.describe(); }
+    public String play()     { return "pling" + super.play(); }
+}
+class Drum extends Instrument {
+    public Drum() { super("drum"); }
+    public String play() { return "boom"; }
+}
+// in main:
+Instrument[] band = { new Guitar(), new Harp(), new Drum() };
+for (int i = 0; i < band.length; ++i) {
+    System.out.println(band[i].concert());
+}
+\end{lstlisting}
+\Q Give the three printed lines. For the second line, list in order every method body that is
+executed, naming its class.
+
+\Q \code{concert()} is written once, in \code{Instrument}, a class that knows nothing about harps.
+Explain precisely why it nevertheless calls \code{Harp}'s \code{describe()}.
+
+\Q Does the statement \code{StringInstrument s = band[0];} compile? \code{band[0]} is a guitar,
+after all.
+
+\Q The constructor of \code{Drum} is deleted. Does the program still compile? What if, in
+addition, \code{Instrument} received a second constructor \code{Instrument()}?
+
+\subsection*{A3. Hiding an attribute\beyond}
+\begin{lstlisting}
+class P {
+    protected int x = 1;
+    public int getX() { return x; }
+}
+class Q extends P {
+    private int x = 2;                       // masquage
+    public int getX() { return x; }
+    public int sum()  { return x + super.x + super.getX(); }
+}
+// in main (same package):
+P p = new Q();
+Q q = new Q();
+System.out.println(p.getX());
+System.out.println(p.x);
+System.out.println(q.sum());
+\end{lstlisting}
+\Q Predict the three lines. Which of them depend on the static type of \code{p}, and which on its
+dynamic type? Use your answer to formulate a rule: ``methods are \ldots, attributes are \ldots''.
+Then explain why the course advises against \emph{masquage}.
+
+\subsection*{A4. \texttt{protected} across packages}
+Four files, in two packages \code{zoo} and \code{park}.
+
+\noindent
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}
+// file zoo/Animal.java
+package zoo;
+public class Animal {
+    protected int energy;
+    private int age;
+    public int getAge() {
+        return age;
+    }
+}
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}
+// file park/Lion.java
+package park;
+import zoo.Animal;
+public class Lion extends Animal {
+    public void eat() {
+        energy = energy + 5; // (1)
+        age = age + 1;       // (2)
+    }
+}
+\end{lstlisting}
+\end{minipage}
+
+\noindent
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}
+// file park/Keeper.java
+package park;
+public class Keeper {
+    public void feed(Lion l) {
+        l.energy += 1;       // (3)
+        int a = l.getAge();  // (4)
+    }
+}
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}
+// file zoo/Vet.java
+package zoo;
+import park.Lion;
+public class Vet {
+    public void check(Lion l) {
+        l.energy = 0;        // (5)
+    }
+}
+\end{lstlisting}
+\end{minipage}
+
+\Q Which of the lines (1)--(5) compile? Justify each one with the rule from lesson~11.
+
+\subsection*{A5. Modelling}
+\Q For each pair, decide whether the right relation is \emph{is-a} (inheritance), \emph{has-a}
+(an attribute) or \emph{neither}, and justify in one line:
+(\code{World}, \code{Element}); (\code{Water}, \code{Liquid}); (\code{Sand}, \code{Element});
+(\code{Fire}, \code{Smoke}); (\code{Liquid}, \code{Powder}); (\code{Wood}, \code{Fire}).
+For (\code{Liquid}, \code{Powder}), note that a liquid does fall exactly like a powder before
+flowing sideways: is reusing code a sufficient reason to inherit?
+
+% =====================================================================
+\section{The world: specification}\label{sec:spec}
+
+\subsection{Grid, ticks and elements}
+
+The world is a grid of \(R\) rows and \(C\) columns. Cell \((r,c)\) has row \(r\in\{0,\dots,R-1\}\)
+and column \(c\in\{0,\dots,C-1\}\); row \(0\) is at the \emph{top}. Every cell always contains
+exactly one element; empty space is the element \code{Air}, never \code{null}. Positions outside the
+grid do not exist: any move or neighbour outside the grid is simply ignored.
+
+Time advances in \emph{ticks}. The world stores the current tick, which is \(0\) after construction
+and is incremented by one at the beginning of each step.
+
+\begin{center}
+\begin{forest}
+  for tree={
+    font=\ttfamily\small, draw, inner sep=3pt, s sep=6pt, l sep=14pt,
+    edge={latex-}, parent anchor=south, child anchor=north, anchor=north
+  }
+  [Element
+    [Air] [Wall] [Wood] [Fire]
+    [Particle, dashed
+      [Powder, dashed [Sand]]
+      [Liquid, dashed [Water] [Oil]]
+      [Gas, dashed [Smoke]]
+    ]
+  ]
+\end{forest}
+
+\smallskip
+{\small Arrows point to the super-class. Dashed classes never appear directly in a scene:
+they hold behaviour shared by their sub-classes.}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabular}{@{}llcrcllp{2.6cm}@{}}
+\toprule
+Class & name & symbol & density & fluid & flammable & extinguishes & other \\
+\midrule
+\code{Air}   & \code{air}   & \verb*| | & 2   & yes & no               & no  & \\
+\code{Wall}  & \code{wall}  & \verb|#|  & 100 & no  & no               & no  & \\
+\code{Wood}  & \code{wood}  & \verb|=|  & 30  & no  & yes, burn 10 & no  & \\
+\code{Fire}  & \code{fire}  & \verb|*|  & 0   & no  & no               & no  & 6 ticks by default \\
+\code{Sand}  & \code{sand}  & \verb|.|  & 10  & no  & no               & no  & \\
+\code{Water} & \code{water} & \verb|~|  & 6   & yes & no               & yes & spread 3 \\
+\code{Oil}   & \code{oil}   & \verb|o|  & 4   & yes & yes, burn 3  & no  & spread 1 \\
+\code{Smoke} & \code{smoke} & \verb|"|  & 1   & yes & no               & no  & lifetime 8 \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+{\small The symbol of \code{Air} is a space. Any character not in this table is read as air.}
+\end{center}
+
+\subsection{Public interface of \texttt{Element}}
+
+\begin{lstlisting}
+public Element(String name, char symbol, int density)
+public String  getName()
+public char    getSymbol()
+public int     getDensity()
+public void    markUpdated(int tick)    // "I was updated at this tick"
+public boolean wasUpdatedAt(int tick)   // true iff last mark == tick
+public boolean isFluid()                // see the table
+public boolean isFlammable()
+public int     getBurnTime()            // 0 for non-flammable elements
+public boolean extinguishesFire()
+public boolean update(World w, int row, int col)
+public String  toString()
+\end{lstlisting}
+
+\code{update} is called by the world when it is this element's turn to act; the element is at
+\((\mathit{row},\mathit{col})\) in \code{w}. It returns \code{true} if and only if, during this call,
+the element moved to another cell or was replaced. In \code{Element}, it does nothing and returns
+\code{false}: this is the general behaviour of matter that never acts (air, walls, wood).
+
+\code{toString()} returns \textit{name}\verb*| '|\textit{symbol}\verb*|' d=|\textit{density},
+for instance \verb|wall '#' d=100|. Some sub-classes extend this text (Parts D and E).
+
+\subsection{Public interface of \texttt{World}}
+
+\begin{lstlisting}
+public World(String[] lines)            // one string per row, equal lengths
+public int     getRows()
+public int     getCols()
+public int     getTick()
+public boolean isInside(int row, int col)
+public Element get(int row, int col)    // precondition: isInside(row, col)
+public void    set(int row, int col, Element e)
+public void    swap(int r1, int c1, int r2, int c2)
+public void    step()                   // one tick
+public void    run(int n)               // n ticks
+public String  renderRow(int row)       // the symbols of one row
+public String  render()                 // all rows, each followed by '\n'
+public int     count(String name)       // cells whose element has this name
+\end{lstlisting}
+
+\paragraph{Rule W1 (marking).} \code{set(r, c, e)} stores \code{e} in the cell \emph{and marks
+\code{e} as updated at the current tick}. \code{swap} exchanges two cells and marks nothing. The
+constructor fills the grid using \code{set}. Consequence: an element created during tick \(t\)
+acts for the first time at tick \(t+1\).
+
+\paragraph{Rule W2 (one step).} \code{step()} does the following.
+\begin{enumerate}[nosep]
+  \item Increment the tick; call its new value \(t\).
+  \item For \(r = R-1\) down to \(0\) (bottom to top), and for \(c = 0\) up to \(C-1\) (left to
+        right): let \(e\) be the element in cell \((r,c)\) \emph{at that moment}. If
+        \(e\) was updated at tick \(t\), skip it. Otherwise mark \(e\) as updated at \(t\), then
+        call \code{e.update(this, r, c)}.
+\end{enumerate}
+The mark guarantees that an element acts at most once per tick, even if it moves to a cell
+that has not been scanned yet.
+
+\subsection{Particles}\label{sec:particles}
+
+A \code{Particle} is an element that moves by swapping places with fluid neighbours. It has
+\begin{lstlisting}
+public int     getGravity()   // +1 (falls); gases: -1 (rises)
+public boolean canEnter(Element target)
+public boolean tryMove(World w, int row, int col, int dRow, int dCol)
+\end{lstlisting}
+
+\paragraph{Rule P1 (who gives way).} Let \(g\) be the gravity of particle \(p\). Then
+\(p\) can enter \(\mathit{target}\) if and only if \(\mathit{target}\) is fluid and
+\[
+  g > 0 \;\Rightarrow\; d(\mathit{target}) < d(p),
+  \qquad
+  g < 0 \;\Rightarrow\; d(\mathit{target}) > d(p),
+\]
+where \(d\) denotes density. \code{tryMove(w, r, c, dr, dc)} checks that \((r+dr, c+dc)\) is inside
+the grid and that the particle can enter the element there; if so it swaps the two cells and
+returns \code{true}, otherwise it returns \code{false} and changes nothing.
+
+\paragraph{Rule P2 (general movement).} The general \code{update} of a particle at \((r,c)\) tries
+the following moves in order and stops at the first one that succeeds:
+\[
+  (g,\,0), \qquad (g,\,s), \qquad (g,\,-s),
+  \qquad\text{where } s = \begin{cases} -1 & \text{if the current tick is even},\\
+                                         +1 & \text{if the current tick is odd.}\end{cases}
+\]
+That is: straight down (or up, for a gas), then diagonally, alternating which diagonal is tried
+first so that piles stay symmetric. It returns \code{true} iff a move succeeded.
+
+% =====================================================================
+\section{Part B --- Elements and the world (35 min)}
+
+\task{B1} Write \code{Element} with the interface above and private attributes. The mark can be
+stored as the last tick at which the element was updated (initially \(-1\)).
+
+\task{B2} Write \code{Air} and \code{Wall}. Each needs only a constructor without parameters and,
+for \code{Air}, one redefinition. Look at lesson~13's \code{Carre}: ``and that's all''.
+
+\task{B3} Write \code{World}: a private two-dimensional array of \code{Element}, the tick, and
+the interface above. Parsing goes through a private method \code{Element createElement(char symbol)}
+(an instance method, called from the constructor). For now, it knows only \verb|#| and the space;
+you will extend it as classes appear. Implement \code{step()} completely now, following rule W2:
+it does not depend on which elements exist.
+
+\paragraph{Checkpoint B.} Build the scene \code{drop} of Appendix~\ref{app:scenes}. Then
+\code{render()} returns the scene unchanged (with \verb|.| read as air for now);
+\code{count("wall")} is \(24\); \code{System.out.println(w.get(0, 0))} prints \verb|wall '#' d=100|
+and \code{w.get(1, 1)} prints \verb*|air ' ' d=2|. Explain in one line why \code{println} prints
+these texts although you never called \code{toString()} yourself.
+
+\Q \code{Element} has no default constructor (R6). What would go wrong, in the context of
+lesson~13, if it had one that set the name to \code{"?"}? Think of a sub-class whose author
+forgets to call \code{super(\ldots)}.
+
+% =====================================================================
+\section{Part C --- Falling particles (40 min)}
+
+\task{C1} Write \code{Particle} according to Section~\ref{sec:particles}, then \code{Powder} and
+\code{Sand}. \code{Sand} contains nothing but its constructor. Add \verb|.| to the parser.
+
+\task{C2} In your main class, write a static function
+\code{boolean conserves(World w, String name, int n)} that runs \code{w} for \code{n} ticks and
+returns whether \code{count(name)} is unchanged. Sand must be conserved in every scene without fire.
+
+\paragraph{Checkpoint C.} Scene \code{drop}, ticks \(0\) to \(4\):
+% scene drop
+\begin{center}
+\begin{checkpoint}{$t=0$}
+\begin{BVerbatim}
+#######
+#  .  #
+#  .  #
+#  .  #
+#     #
+#     #
+#######
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=1$}
+\begin{BVerbatim}
+#######
+#     #
+#  .  #
+#  .  #
+#  .  #
+#     #
+#######
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=2$}
+\begin{BVerbatim}
+#######
+#     #
+#     #
+#  .  #
+#  .  #
+#  .  #
+#######
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=3$}
+\begin{BVerbatim}
+#######
+#     #
+#     #
+#     #
+#  .  #
+#  .. #
+#######
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=4$}
+\begin{BVerbatim}
+#######
+#     #
+#     #
+#     #
+#     #
+# ... #
+#######
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+
+Scene \code{hourglass} at ticks \(5\), \(20\) and \(60\), with \code{count("sand")} \(=24\)
+throughout:
+% scene hourglass
+\begin{center}
+\begin{checkpoint}{$t=5$}
+\begin{BVerbatim}
+###########
+#    .....#
+## ......##
+###.....###
+####...####
+#####.#####
+#### . ####
+###  .  ###
+##   .   ##
+#    .    #
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=20$}
+\begin{BVerbatim}
+###########
+#        .#
+##      .##
+###    .###
+####  .####
+#####.#####
+####.. ####
+### ....###
+##...... ##
+# ....... #
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=60$}
+\begin{BVerbatim}
+###########
+#         #
+##       ##
+###     ###
+####   ####
+##### #####
+####...####
+###.....###
+##.......##
+#.........#
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+
+
+\Q (\emph{What changes if\ldots?}) Suppose rule W2 scanned rows from top to bottom instead.
+Predict the scene \code{drop} after one tick, \emph{then} check by temporarily changing your code.
+Why is bottom-to-top the natural order for falling matter, and which kind of particle will
+prefer the opposite order?
+
+\Q \code{Powder} currently adds nothing to \code{Particle}. Give two reasons, one about modelling
+and one about the future of the code, to keep it in the hierarchy.
+
+% =====================================================================
+\section{Part D --- Liquids (40 min)}
+
+A \code{Liquid} is a fluid particle with an integer \emph{spread} (given to its constructor) and a
+private \emph{direction} \(\delta\in\{-1,+1\}\), initially \(+1\) (to the right).
+
+\paragraph{Rule L1 (liquid movement).} The \code{update} of a liquid at \((r,c)\):
+\begin{enumerate}[nosep]
+  \item tries the general movement of rule P2; if it succeeds, returns \code{true};
+  \item otherwise \emph{flows}: repeatedly moves one cell in direction \(\delta\), i.e.\ performs
+        \code{tryMove(w, r,} \(c'\)\code{, 0,} \(\delta\)\code{)} from its \emph{current} column \(c'\), until
+        a move fails or it has moved \emph{spread} cells; if it moved at least once, returns
+        \code{true};
+  \item otherwise (it has not moved) reverses its direction (\(\delta \leftarrow -\delta\)) and
+        flows once more as in step~2; returns whether it moved.
+\end{enumerate}
+
+\task{D1} Write \code{Liquid}, \code{Water} and \code{Oil}, and add \verb|~| and \verb|o| to the
+parser. Step 1 of rule L1 must be a call to \code{super.update(\ldots)} (R5): this is the
+specialisation pattern of lesson~12.
+
+\task{D2} Redefine \code{toString()} in \code{Liquid} so that it appends
+\verb*| spread=|\textit{spread}\verb*| dir=|\textit{direction} to the general text, e.g.\
+\verb|water '~' d=6 spread=3 dir=1|.
+
+\paragraph{Checkpoint D.} Scene \code{layers} at ticks \(1\), \(2\), \(3\) (then nothing changes):
+% scene layers
+\begin{center}
+\begin{checkpoint}{$t=1$}
+\begin{BVerbatim}
+#########
+#       #
+#.......#
+#~~~~~~~#
+#ooooooo#
+#########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=2$}
+\begin{BVerbatim}
+#########
+#       #
+#ooooooo#
+#.......#
+#~~~~~~~#
+#########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=3$}
+\begin{BVerbatim}
+#########
+#       #
+#ooooooo#
+#~~~~~~~#
+#.......#
+#########
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+
+Scene \code{dam} at ticks \(1\), \(2\), \(3\) and \(12\):
+% scene dam
+\begin{center}
+\begin{checkpoint}{$t=1$}
+\begin{BVerbatim}
+############
+#~  #      #
+#~~~#      #
+#~~~#      #
+#~~~~ ~    #
+############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=2$}
+\begin{BVerbatim}
+############
+#  ~#      #
+#~~ #      #
+#~~~#      #
+#~~~~~   ~ #
+############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=3$}
+\begin{BVerbatim}
+############
+#   #      #
+#~~~#      #
+#~~~#      #
+#~~~~   ~ ~#
+############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=12$}
+\begin{BVerbatim}
+############
+#   #      #
+#   #      #
+#~ ~#      #
+#~~~~~~~~~~#
+############
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+After one tick of \code{dam}:
+\begin{itemize}[nosep]
+  \item \code{w.get(1, 1)} prints \verb|water '~' d=6 spread=3 dir=-1|.
+\end{itemize}
+
+
+
+\Q Nowhere in your code is there a line saying ``oil goes up''. Which rule makes oil end up above
+the water in \code{layers}? Trace what happens to one oil cell and the water cell above it at
+tick \(2\).
+
+\Q Is the scene \code{dam} ever static? Argue from rule L1, then check it with \code{render()}.
+
+\Q (\emph{Masquage in your own code.}) A colleague adds \code{private int direction = -1;} to
+\code{Water}, ``so that water starts by flowing to the left''. Does the behaviour of water change?
+What does \code{toString()} print for a fresh \code{Water}? Explain using A3.
+
+% =====================================================================
+\section{Part E --- Fire and smoke (45 min)}
+
+\paragraph{Rule K1 (flammability).} \code{Wood} and \code{Oil} are flammable, with burn times
+\(10\) and \(3\); \code{Water} extinguishes fire. Every other element keeps the general answers
+of \code{Element} (\code{false}, \(0\), \code{false}).
+
+\paragraph{Rule S1 (gases).} A \code{Gas} is a fluid particle with gravity \(-1\), a
+\emph{lifetime} (given to its constructor) and an \emph{age}, initially \(0\). Its \code{update}:
+first increments its age; if the age has reached the lifetime, it replaces itself by a new
+\code{Air} (with \code{set}) and returns \code{true}; otherwise it performs the general movement of
+rule P2. Its \code{toString()} appends \verb*| age=|\textit{age}\verb|/|\textit{lifetime}.
+
+\paragraph{Rule K2 (fire).} A \code{Fire} has a number of remaining ticks. \code{Fire(int remaining)}
+is the main constructor; \code{Fire()} uses \(6\) and must be written with \code{this(\ldots)}.
+The orthogonal neighbours of \((r,c)\) are, in this order, up \((r-1,c)\), right \((r,c+1)\),
+down \((r+1,c)\) and left \((r,c-1)\), ignoring those outside the grid. Its \code{update}:
+\begin{enumerate}[nosep]
+  \item if some neighbour extinguishes fire, the fire replaces itself by a new \code{Smoke} and
+        returns \code{true};
+  \item otherwise, each flammable neighbour \(n\), in the order above, is replaced by a new fire
+        whose remaining ticks equal the burn time of \(n\);
+  \item then the remaining ticks decrease by one; if they reach \(0\), the fire replaces itself by
+        a new \code{Smoke} and returns \code{true}. Otherwise it returns \code{false}.
+\end{enumerate}
+Its \code{toString()} appends \verb*| left=|\textit{remaining}.
+
+\task{E1} Write \code{Wood}, then add the redefinitions needed by rule K1. Remember R3 and R4:
+\code{Fire} must work for any flammable element added later without being modified.
+
+\task{E2} Write \code{Gas}, \code{Smoke} and \code{Fire}, and extend the parser with
+\verb|=|, \verb|*| and \verb|"|.
+
+\paragraph{Checkpoint E.} Scene \code{cabin} at ticks \(1\), \(2\), \(6\):
+% scene cabin
+\begin{center}
+\begin{checkpoint}{$t=1$}
+\begin{BVerbatim}
+###############
+#             #
+#             #
+#   =======   #
+#   =     =   #
+#   =  *  =   #
+#   ===*===   #
+###############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=2$}
+\begin{BVerbatim}
+###############
+#             #
+#             #
+#   =======   #
+#   =     =   #
+#   =  *  =   #
+#   ==***==   #
+###############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=6$}
+\begin{BVerbatim}
+###############
+#             #
+#             #
+#   =======   #
+#   *     *   #
+#   *  "  *   #
+#   *******   #
+###############
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+
+then at ticks \(10\), \(15\), \(20\); everything has disappeared by tick \(30\):
+% scene cabin
+\begin{center}
+\begin{checkpoint}{$t=10$}
+\begin{BVerbatim}
+###############
+#             #
+#             #
+#   *******   #
+#   *  "  *   #
+#   *     *   #
+#   *******   #
+###############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=15$}
+\begin{BVerbatim}
+###############
+#             #
+#             #
+#   *******   #
+#   *"" ""*   #
+#  ""    """  #
+#             #
+###############
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=20$}
+\begin{BVerbatim}
+###############
+#  """   """""#
+#  "" " "  "  #
+#    " "      #
+#             #
+#             #
+#             #
+###############
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+
+Scene \code{oilfire} at ticks \(1\), \(2\), \(3\), \(6\):
+% scene oilfire
+\begin{center}
+\begin{checkpoint}{$t=1$}
+\begin{BVerbatim}
+###########
+#         #
+#*        #
+#*oooooooo#
+#~~~~~~~~~#
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=2$}
+\begin{BVerbatim}
+###########
+#         #
+#*        #
+#*ooooooo"#
+#~~~~~~~~~#
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=3$}
+\begin{BVerbatim}
+###########
+#         #
+#*       "#
+#*oooooo" #
+#~~~~~~~~~#
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\hspace{1.6em}
+\begin{checkpoint}{$t=6$}
+\begin{BVerbatim}
+###########
+#      """#
+#"    "   #
+#*ooo"    #
+#~~~~~~~~~#
+###########
+\end{BVerbatim}
+\end{checkpoint}
+\end{center}
+
+After one tick of \code{oilfire}:
+\begin{itemize}[nosep]
+  \item \code{w.get(2, 1)} prints \verb|fire '*' d=0 left=5|;
+  \item \code{w.get(3, 1)} prints \verb|fire '*' d=0 left=3|;
+  \item \code{w.get(3, 5)} prints \verb|oil 'o' d=4 spread=1 dir=-1|.
+\end{itemize}
+Explain why that oil cell has already turned around although it has not moved.
+
+\Q \code{Particle.update} calls \code{getGravity()}, and was written before \code{Gas} existed.
+When a smoke cell is updated, list the method bodies that execute (with their classes), and
+explain why \code{Particle} does not need to be modified for smoke to rise.
+
+\Q Suppose \code{set} did \emph{not} mark the new element (rule W1). Give a scene of one row and
+a scene of one column in which a whole line of wood would burn in a single tick. Why does a fire
+placed at the \emph{right} end of a row of wood not show the problem?
+
+\Q Fire is hot and rises: would \code{Fire extends Gas} be a good idea? List what \code{Fire}
+would inherit, what its \code{update} would have to look like, and whether the is-a test passes.
+
+\Q \code{Wood} and \code{Oil} both redefine the flammability methods, yet their only common
+super-class is \code{Element}. Is this duplication? Can it be removed with inheritance alone,
+without making \code{Element} know about burning? (Keep your answer: interfaces come in week~5.)
+
+% =====================================================================
+\section{Part F --- Parallel futures: copying a world (30 min)}
+
+Goal: from a world \code{w}, build an independent copy \code{future}, run the copy ahead, and
+compare it with the present. A correct copy satisfies the following property, which is your test:
+\[
+  \textit{for every scene and all } k, n:\quad
+  \text{run } k \text{ ticks, copy, run both } n \text{ ticks} \;\Longrightarrow\;
+  \text{identical renders.}
+\]
+
+\task{F1} (\emph{Naive version.}) Write \code{World(World other)} so that it creates a
+\emph{new} array but fills it with \emph{the same element references} as \code{other}. Run the
+experiment: scene \code{cabin}, \(k=2\), \(n=5\). Then run it again with \code{hourglass},
+\(k=2\), \(n=9\).
+
+\Q One experiment passes and the other fails. Explain exactly which attributes are shared
+between the two worlds, which method calls modify them, and why sand ``gets away with it''.
+What does this tell you about the limits of testing?
+
+\task{F2} (\emph{Deep version.}) Give every class a copy constructor \code{C(C other)} that
+starts with \code{super(other)} and copies its own attributes (all state, including the mark).
+Every class that can appear in a scene redefines
+\begin{lstlisting}
+public Element copy()   // new object of the same class, via the copy constructor
+\end{lstlisting}
+and \code{Element.copy()} returns \code{new Element(this)}. Rewrite \code{World(World other)} with
+\code{copy()}. All experiments must now pass.
+
+\Q In the copy constructor \code{Water(Water other)}, which calls \code{super(other)}, the argument has type \code{Water} but the
+constructor of \code{Liquid} expects a \code{Liquid}. Why is this legal? Could the call
+\code{new Element(other.get(r, c))} replace \code{copy()} in \code{World(World other)}? What would
+the copied world look like after a few ticks?
+
+\Q (\emph{What changes if\ldots?}) The copy constructor of \code{World} forgets to copy the tick.
+In \code{hourglass} with \(n=9\), for which values of \(k\) does the experiment detect it, and what
+does the difference look like? Predict first, then check with \(k=2\) and \(k=3\).
+
+\Q Suppose \code{Water} forgets to redefine \code{copy()}. What is the dynamic type of a copied
+water cell? (It depends on which of \code{Liquid}, \code{Particle} redefine \code{copy()}: answer
+for your code and for the other possibilities.) With your code, which scenes of
+Appendix~\ref{app:scenes} can detect the bug with the experiment, and which cannot? Under which
+condition would the same mistake in \code{Sand} go unnoticed in \emph{every} possible scene?
+
+% =====================================================================
+\section{Part G --- Your scene, the design table, reflection (20 min)}
+
+\task{G1} Using the helper of Appendix~\ref{app:helper}, write a \code{main} that animates a scene:
+clear the screen, print \code{render()} and the tick, pause about 80\,ms, step, repeat.
+
+\task{G2} Design your own scene, at least \(30 \times 15\), using at least six kinds of element,
+that tells a small story in at most 200 ticks (for instance, an oil tank leaks, catches fire, and a
+water tower bursts in time, or not). Keep it in your main class as a \code{String[]}.
+
+\task{G3} Fill in a table with one row per class and one column per method of the
+\code{Element} interface (plus \code{getGravity}, \code{canEnter}, \code{tryMove}, \code{copy}).
+In each cell write D (defined here), R (redefined here) or nothing (inherited). Then answer:
+
+\Q Count the R entries for \code{update}. For each, say whether the redefinition \emph{replaces}
+or \emph{extends} (with \code{super}) the general behaviour.
+
+\Q \code{Element.update} has an empty body and \verb|new Element("?", '?', 0)| is accepted by the
+compiler, although such an object is meaningless. Describe the two problems this causes, and the
+language feature you would like to fix them.
+
+\Q All your classes live in the same (default) package. In this setting, what does
+\code{protected} give compared with \code{private}, and compared with \code{public}? Would making
+the attributes of \code{Element} \code{protected} have saved you code? Would it have been worth it?
+
+% =====================================================================
+\section*{Optional extensions}
+
+Each extension is a test of your design: count how many existing classes you had to modify.
+\begin{itemize}
+  \item \textbf{Steam.} When water extinguishes a fire, the fire becomes \code{Steam} (a gas)
+        instead of smoke, and steam turns back into water when its lifetime ends. Rule S1 creates
+        \code{Air} at the end of a gas's life: refactor \code{Gas} so that a sub-class can choose
+        what it leaves behind, by redefining a single method.
+  \item \textbf{Lava.} A liquid, as dense as sand, that ignites its flammable neighbours like a
+        fire and turns into stone when it touches water. Which code of \code{Fire} would you like
+        to reuse, and why does single inheritance prevent it?
+  \item \textbf{Salt.} A powder that disappears when it is next to water, which becomes
+        \code{SaltWater}: denser than water, so it sinks below it.
+\end{itemize}
+
+\appendix
+% =====================================================================
+\section{Scenes}\label{app:scenes}
+
+Copy each array into your main class. PDF viewers usually drop the spaces inside these strings
+when you copy them, so copy the arrays from the \LaTeX{} source of this document instead.
+
+\noindent
+\begin{minipage}[t]{0.32\linewidth}
+\begin{lstlisting}
+String[] drop = {
+    "#######",
+    "#  .  #",
+    "#  .  #",
+    "#  .  #",
+    "#     #",
+    "#     #",
+    "#######"
+};
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\linewidth}
+\begin{lstlisting}
+String[] hourglass = {
+    "###########",
+    "#.........#",
+    "##.......##",
+    "###.....###",
+    "####...####",
+    "##### #####",
+    "####   ####",
+    "###     ###",
+    "##       ##",
+    "#         #",
+    "###########"
+};
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\linewidth}
+\begin{lstlisting}
+String[] layers = {
+    "#########",
+    "#.......#",
+    "#~~~~~~~#",
+    "#ooooooo#",
+    "#       #",
+    "#########"
+};
+\end{lstlisting}
+\end{minipage}
+
+\noindent
+\begin{minipage}[t]{0.32\linewidth}
+\begin{lstlisting}
+String[] dam = {
+    "############",
+    "#~~~#      #",
+    "#~~~#      #",
+    "#~~~#      #",
+    "#~~~       #",
+    "############"
+};
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\linewidth}
+\begin{lstlisting}
+String[] cabin = {
+    "###############",
+    "#             #",
+    "#             #",
+    "#   =======   #",
+    "#   =     =   #",
+    "#   =  *  =   #",
+    "#   =======   #",
+    "###############"
+};
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\linewidth}
+\begin{lstlisting}
+String[] oilfire = {
+    "###########",
+    "#         #",
+    "#*        #",
+    "#ooooooooo#",
+    "#~~~~~~~~~#",
+    "###########"
+};
+\end{lstlisting}
+\end{minipage}
+
+\section{Terminal helper}\label{app:helper}
+
+Paste these two functions into your main class and treat them as a black box: \code{try}/\code{catch}
+belongs to week~6. If your terminal does not understand the escape sequence (some Windows
+consoles), print about forty empty lines instead.
+\begin{lstlisting}
+static void clearScreen() {
+    System.out.print("\033[H\033[2J");
+    System.out.flush();
+}
+
+static void pause(int milliseconds) {
+    try { Thread.sleep(milliseconds); } catch (InterruptedException e) { }
+}
+\end{lstlisting}
+
+\section{Self-assessment}
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright}p{5.4cm}l>{\raggedright\arraybackslash}p{6.4cm}@{}}
+\toprule
+Concept & Lesson & Where it is tested \\
+\midrule
+\code{extends}, is-a vs has-a, transitivity & 10 & Q9, Q12, Q18, the hierarchy itself \\
+\code{protected}, packages & 11 & Q7, Q8, Q26, R2 \\
+redefinition and \code{super.}\emph{method} & 12 & Q3, Q4, Tasks D1, D2, E1, Q24 \\
+\emph{masquage} & 12 & Q7, Q15 \\
+\code{super(\ldots)}, \code{this(\ldots)}, order of construction & 13 & Q1, Q2, Q6, Q10, R6, rule K2, F2 \\
+static vs dynamic binding & 14 & Q3--Q5, Q7, Q16, Q21, Q23 \\
+copy constructors, references & week 2 & F1, F2, Q20--Q23 \\
+2-D arrays, strings, loops, functions & BOOC I & B3, C2, G1, G2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
